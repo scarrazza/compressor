@@ -16,7 +16,7 @@ public:
   Mini(int rep, vector<LHAPDF::PDF*> pdf);
   ~Mini();
   double iterate(int* index);
-  double ComputeAVG(double,double,int,int*);
+  void ComputeAVG(double,double,int,int*,double*,double*);
   void   Save(int* index, string);
 
 private:
@@ -26,6 +26,7 @@ private:
   vector<double> fX;
   vector<LHAPDF::PDF*> fPDF;
   vector<double*> fCV;
+  vector<double*> fSD;
   vector<int*> fMut;
   vector<int> fPids;
 };

@@ -9,13 +9,18 @@
 using namespace std;
 
 // compute
-double Mini::ComputeAVG(double x, double q, int f, int* index)
+void Mini::ComputeAVG(double x, double q, int f, int* index, double *cv, double* std)
 {
-  double sum = 0;
+  double sum = 0, sq_sum = 0;
   for (size_t i = 0; i < fRep; i++)
-    sum += fPDF[index[i]]->xfxQ(f, x, q);
+    {
+      const double v = fPDF[index[i]]->xfxQ(f, x, q);
+      sum += v;
+      sq_sum += v*v; 
+    }
 
-  return sum / (double) fRep;
+  *cv = sum / (double) fRep;
+  *std= sqrt(sq_sum / (double) fRep - *cv * *cv);
 }
 
 Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
@@ -29,6 +34,7 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
   for (int i = 0; i < (int) fNMut; i++)
     fMut.push_back(new int[fRep]);
   
+  /*
   fX.push_back(1.0000000000000001E-009);
   fX.push_back(1.4508287784959398E-009);
   fX.push_back(2.1049041445120207E-009);
@@ -41,26 +47,27 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
   fX.push_back(2.8480358684358022E-008);
   fX.push_back(4.1320124001153370E-008);
   fX.push_back(5.9948425031894094E-008);
-  fX.push_back(8.6974900261778356E-008);
+  fX.push_back(8.6974900261778356E-008);  
   fX.push_back(1.2618568830660210E-007);
   fX.push_back(1.8307382802953678E-007);
   fX.push_back(2.6560877829466870E-007);
   fX.push_back(3.8535285937105315E-007);
   fX.push_back(5.5908101825122239E-007);
-  fX.push_back(8.1113083078968731E-007);
+  fX.push_back(8.1113083078968731E-007);  
   fX.push_back(1.1768119524349981E-006);
   fX.push_back(1.7073526474706905E-006);
   fX.push_back(2.4770763559917115E-006);
   fX.push_back(3.5938136638046262E-006);
   fX.push_back(5.2140082879996849E-006);
   fX.push_back(7.5646332755462914E-006);
+  */
   fX.push_back(1.0974987654930569E-005);
   fX.push_back(1.5922827933410941E-005);
   fX.push_back(2.3101297000831580E-005);
   fX.push_back(3.3516026509388410E-005);
   fX.push_back(4.8626015800653536E-005);
   fX.push_back(7.0548023107186455E-005);
-
+  
   fX.push_back(1.0235310218990269E-004);
   fX.push_back(1.4849682622544667E-004);
   fX.push_back(2.1544346900318823E-004);
@@ -111,7 +118,7 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
   fX.push_back(0.61428571428571421);
   fX.push_back(0.63265306122448983);
   fX.push_back(0.65102040816326534);
-
+  
   fX.push_back(0.66938775510204085);
   fX.push_back(0.68775510204081625);
   fX.push_back(0.70612244897959175);
@@ -126,19 +133,29 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
   fX.push_back(0.87142857142857133);
   fX.push_back(0.88979591836734695);
   fX.push_back(0.90816326530612246);
+  /*
   fX.push_back(0.92653061224489797);
   fX.push_back(0.94489795918367347);
   fX.push_back(0.96326530612244898);
   fX.push_back(0.98163265306122449);
   fX.push_back(1.0000000000000000);
+  */
 
   fPids = pdf[0]->flavors();
 
   for (int i = 0; i < (int) fPids.size(); i++)
     {
       fCV.push_back(new double[fX.size()]);
+      fSD.push_back(new double[fX.size()]);
       for (int j = 0; j < (int) fX.size(); j++)
-        fCV[i][j] = pdf[0]->xfxQ(fPids[i], fX[j], Q);
+	{
+	  fCV[i][j] = pdf[0]->xfxQ(fPids[i], fX[j], Q);
+	  
+	  fSD[i][j] = 0.0;
+	  for (int r = 1; r < (int) pdf.size(); r++)
+	    fSD[i][j] +=  pow(pdf[r]->xfxQ(fPids[i], fX[j], Q), 2.0);
+	  fSD[i][j] = sqrt(fSD[i][j]/ (double) (pdf.size()-1) - fCV[i][j]*fCV[i][j]);
+	}
     }
 
 }
@@ -149,6 +166,10 @@ Mini::~Mini()
   for (int i = 0; i < (int) fCV.size(); i++)
     if (fCV[i]) delete[] fCV[i];
   fCV.clear();
+
+  for (int i = 0; i < (int) fSD.size(); i++)
+    if (fSD[i]) delete[] fSD[i];
+  fSD.clear();
 
   for (int i = 0; i < (int) fMut.size(); i++)
     if (fMut[i]) delete[] fMut[i];
@@ -161,7 +182,12 @@ double Mini::iterate(int* index)
   double berf = 0;
   for (int f = 0; f < (int) fPids.size(); f++)
     for (int i = 0; i < (int) fX.size(); i++)
-      berf += pow(fCV[f][i] - ComputeAVG(fX[i], Q, fPids[f], index), 2.0);
+      {
+	double cv = 0, std = 0;
+	ComputeAVG(fX[i], Q, fPids[f], index, &cv, &std);
+	berf += pow(fCV[f][i] - cv, 2.0);
+	berf += pow(fSD[f][i] - std, 2.0);
+      }
 
   //
   for (int i = 0; i < fNMut; i++)
@@ -191,7 +217,12 @@ double Mini::iterate(int* index)
       erf[i] = 0.0;
       for (int f = 0; f < (int) fPids.size(); f++)
         for (int j = 0; j < (int) fX.size(); j++)
-          erf[i] += pow(fCV[f][j] - ComputeAVG(fX[j], Q, fPids[f], fMut[i]), 2.0);
+	  {
+	    double cv = 0, std = 0;
+	    ComputeAVG(fX[j], Q, fPids[f], fMut[i], &cv, &std);
+	    erf[i] += pow(fCV[f][j] - cv, 2.0);
+	    erf[i] += pow(fSD[f][j] - std, 2.0);
+	  }
     }
 
   // Selection
@@ -226,7 +257,11 @@ void Mini::Save(int *index, string dir)
       file << dir << "/scatter_" << fPids[i] << ".dat";
       f.open(file.str().c_str(), ios::out);
       for (int ix = 0; ix < (int) fX.size(); ix++)
-        f << scientific << fCV[i][ix] << "\t" << ComputeAVG(fX[ix],Q,fPids[i],index) << endl;
+	{
+	  double cv = 0, std = 0;
+	  ComputeAVG(fX[ix],Q,fPids[i],index,&cv,&std);
+	  f << scientific << fCV[i][ix] << "\t" << cv << endl;
+	}
       f.close();
     }
 }
