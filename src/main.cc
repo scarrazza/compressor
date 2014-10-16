@@ -10,14 +10,16 @@ int main(int argc, char **argv)
 {
   string filename;
   int rep = 100;
-  if (argc > 2)
+  int NIte = 0;
+  if (argc > 3)
     {
       rep = atoi(argv[1]);
-      filename.assign(argv[2]);
+      NIte = atoi(argv[2]);
+      filename.assign(argv[3]);
     }
   else
     {
-      cout << "\nusage: compressor [desired replicas] [PDF set name]\n" << endl;
+      cout << "\nusage: compressor [desired replicas] [ite] [PDF set name]\n" << endl;
       exit(-1);
     }
 
@@ -27,9 +29,7 @@ int main(int argc, char **argv)
   // load PDF set
   const LHAPDF::PDFSet set(filename.c_str());
   vector<LHAPDF::PDF*> pdf = set.mkPDFs();
-
-  // general Setup
-  const int NIte = 30000;
+  vector<int> fPids = pdf[0]->flavors();
 
   // input vector
   int *index = new int[rep];
@@ -56,8 +56,32 @@ int main(int argc, char **argv)
   log << fixed << NIte << "\t"
        << scientific << e << endl;
 
-  min->Save(index, filename);
+  // Compute other estimators
+  double ecv = 0, estd = 0, esk = 0, eku = 0, eko = 0;
+  double *res = new double[6];
+  for (int f = 0; f < (int) fPids.size(); f++)
+    for (int i = 0; i < (int) min->GetX().size(); i++)
+      {
+	double cv = 0, std = 0, sk = 0, kur = 0;
+	min->ComputeEstimators(rep, min->GetX()[i], Q, fPids[f], index, 
+			       &cv, &std, &sk, &kur, res);	
+	ecv  += pow(min->GetCV(f,i) - cv, 2.0);
+	estd += pow(min->GetSD(f,i) - std, 2.0);
+	esk  += pow(min->GetSK(f,i) - sk, 2.0);
+	eku  += pow(min->GetKU(f,i) - kur, 2.0);
+	
+	for (int l = 0; l < 6; l++)
+	  eko += pow(min->GetKO(f,i,l) - res[l], 2.0);	      
+      }
+  delete[] res;
 
+  cout << scientific;
+  cout << "CV:  " << ecv << endl;
+  cout << "STD: " << estd << endl;
+  cout << "SKE: " << esk << endl;
+  cout << "KUR: " << eku << endl;
+  cout << "KOL: " << eko << endl;
+  
   // save erf log
   fstream f;
   stringstream a("");

@@ -5,23 +5,73 @@
 #include "mini.h"
 #include "randomgenerator.h"
 #include "LHAPDF/LHAPDF.h"
-#define Q 1.0
 using namespace std;
 
 // compute
-void Mini::ComputeAVG(double x, double q, int f, int* index, double *cv, double* std)
+void Mini::ComputeEstimators(int n, double x, double q, int f, int* index, 
+			     double *cv, double* std, double *ske, 
+			     double *kur, double *res)
 {
   double sum = 0, sq_sum = 0;
-  for (size_t i = 0; i < fRep; i++)
+  for (size_t i = 0; i < n; i++)
     {
       const double v = fPDF[index[i]]->xfxQ(f, x, q);
       sum += v;
       sq_sum += v*v; 
     }
 
-  *cv = sum / (double) fRep;
-  *std= sqrt(sq_sum / (double) fRep - *cv * *cv);
+  *cv = sum / (double) n;
+  *std= sqrt(sq_sum / (double) n - *cv * *cv);
+
+  double sq_sum2 = 0, cub_sum = 0;
+  for (size_t i = 0; i < n; i++)
+    {
+      cub_sum += pow(fPDF[index[i]]->xfxQ(f, x, q) - *cv, 3.0);
+      sq_sum2 += pow(fPDF[index[i]]->xfxQ(f, x, q) - *cv, 4.0);
+    }
+
+  *ske = (cub_sum / n) / pow(*std, 3.0);
+  *kur = (sq_sum2 / n) / pow(*std, 4.0) - 3.0;
+
+  // Kolmogoroz
+  for (int l = 0; l < 6; l++) res[l] = 0;
+ 
+  for (size_t i = 0; i < n; i++)
+    {
+      double v = fPDF[index[i]]->xfxQ(f, x, q);
+      if (v <= *cv -2* *std)
+	res[0] += 1;
+      else if (v <= *cv - *std)
+	res[1] += 1;
+      else if (v <= *cv)
+	res[2] += 1;
+      else if (v <= *cv + *std)
+	res[3] += 1;
+      else if (v <= *cv + 2* *std)
+	res[4] += 1;
+      else if (v > *cv + 2* *std)
+	res[5] += 1;
+      else
+	cout << "ERROR" << endl;
+    }
+
+  for (int l = 0; l < 6; l++) res[l] /= (double) n;
 }
+
+void Mini::Compute4ERF(int n, double x, double q, int f, int* index, 
+			     double *cv, double* std, double *ske, 
+			     double *kur, double *res)
+{
+  double sum = 0;
+  for (size_t i = 0; i < n; i++)
+    {
+      const double v = fPDF[index[i]]->xfxQ(f, x, q);
+      sum += v;
+    }
+
+  *cv = sum / (double) n;
+}
+
 
 Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
   fRep(rep),
@@ -143,20 +193,35 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
 
   fPids = pdf[0]->flavors();
 
+  int *index = new int[pdf.size()-1];
+  for (int i = 0; i < (int) pdf.size()-1; i++) index[i] = i+1;
+
   for (int i = 0; i < (int) fPids.size(); i++)
     {
       fCV.push_back(new double[fX.size()]);
       fSD.push_back(new double[fX.size()]);
+      fSK.push_back(new double[fX.size()]);
+      fKU.push_back(new double[fX.size()]);
+      fKO.push_back(new double*[fX.size()]);
+
       for (int j = 0; j < (int) fX.size(); j++)
 	{
-	  fCV[i][j] = pdf[0]->xfxQ(fPids[i], fX[j], Q);
+	  double cv = 0, std = 0, kur = 0, sk = 0;
+	  double *res = new double[6];
+	  ComputeEstimators((int) pdf.size() - 1,fX[j], Q, fPids[i], index, 
+			    &cv, &std, &sk, &kur, res);
+	  fCV[i][j] = cv;
+	  fSD[i][j] = std;
+	  fSK[i][j] = sk;
+	  fKU[i][j] = kur;
 	  
-	  fSD[i][j] = 0.0;
-	  for (int r = 1; r < (int) pdf.size(); r++)
-	    fSD[i][j] +=  pow(pdf[r]->xfxQ(fPids[i], fX[j], Q), 2.0);
-	  fSD[i][j] = sqrt(fSD[i][j]/ (double) (pdf.size()-1) - fCV[i][j]*fCV[i][j]);
+	  fKO[i][j] = new double[6];
+	  for (int l = 0; l < 6; l++) fKO[i][j][l] = res[l];
+
+	  delete[] res;
 	}
     }
+  delete[] index;
 
 }
 
@@ -171,6 +236,22 @@ Mini::~Mini()
     if (fSD[i]) delete[] fSD[i];
   fSD.clear();
 
+  for (int i = 0; i < (int) fKU.size(); i++)
+    if (fKU[i]) delete[] fKU[i];
+  fKU.clear();
+
+  for (int i = 0; i < (int) fSK.size(); i++)
+    if (fSK[i]) delete[] fSK[i];
+  fSK.clear();
+
+  for (int i = 0; i < (int) fKO.size(); i++)
+    {
+      for (int j = 0; j < (int) fX.size(); j++)
+	if (fKO[i][j]) delete[] fKO[i][j];
+      if (fKO[i]) delete[] fKO[i];
+    }  
+  fKO.clear();
+
   for (int i = 0; i < (int) fMut.size(); i++)
     if (fMut[i]) delete[] fMut[i];
   fMut.clear();
@@ -180,16 +261,18 @@ double Mini::iterate(int* index)
 {
   // ERF
   double berf = 0;
+  double *res = new double[6];
   for (int f = 0; f < (int) fPids.size(); f++)
     for (int i = 0; i < (int) fX.size(); i++)
       {
-	double cv = 0, std = 0;
-	ComputeAVG(fX[i], Q, fPids[f], index, &cv, &std);
+	double cv = 0, std = 0, sk = 0, kur = 0;
+	Compute4ERF(fRep, fX[i], Q, fPids[f], index, 
+			  &cv, &std, &sk, &kur,res);
 	berf += pow(fCV[f][i] - cv, 2.0);
-	berf += pow(fSD[f][i] - std, 2.0);
+	//berf += pow(fSD[f][i] - std, 2.0);
       }
 
-  //
+  // set mut
   for (int i = 0; i < fNMut; i++)
     for (int j = 0; j < (int) fRep; j++)
         fMut[i][j] = index[j];
@@ -198,11 +281,12 @@ double Mini::iterate(int* index)
   for (int i = 0; i < fNMut; i++)
     {
       const double g = fRg->GetRandomUniform();
-
-      int nmut = 3;
-      if (g < 0.7) nmut = 1;
-      else if (g < 0.9 && g >= 0.7) nmut = 2;
-
+      
+      int nmut = 4;
+      if (g <= 0.3) nmut = 1;
+      else if (g > 0.3 && g <= 0.6) nmut = 2;
+      else if (g > 0.6 && g <= 0.7) nmut = 3;
+     
       for (int t = 0; t < nmut; t++)
         {
           const int pos = fRg->GetRandomUniform(fPDF.size()-1)+1;
@@ -218,10 +302,11 @@ double Mini::iterate(int* index)
       for (int f = 0; f < (int) fPids.size(); f++)
         for (int j = 0; j < (int) fX.size(); j++)
 	  {
-	    double cv = 0, std = 0;
-	    ComputeAVG(fX[j], Q, fPids[f], fMut[i], &cv, &std);
+	    double cv = 0, std = 0, kur = 0, sk = 0;
+	    Compute4ERF(fRep, fX[j], Q, fPids[f], fMut[i],
+			      &cv,&std,&sk,&kur,res);
 	    erf[i] += pow(fCV[f][j] - cv, 2.0);
-	    erf[i] += pow(fSD[f][j] - std, 2.0);
+	    //erf[i] += pow(fSD[f][j] - std, 2.0);
 	  }
     }
 
@@ -243,25 +328,6 @@ double Mini::iterate(int* index)
   else bestchi2 = berf;
 
   delete[] erf;
-
+  delete[] res;
   return bestchi2;
-}
-
-void Mini::Save(int *index, string dir)
-{
-  fstream f;
-
-  for (int i = 0; i < (int) fPids.size(); i++)
-    {
-      stringstream file("");
-      file << dir << "/scatter_" << fPids[i] << ".dat";
-      f.open(file.str().c_str(), ios::out);
-      for (int ix = 0; ix < (int) fX.size(); ix++)
-	{
-	  double cv = 0, std = 0;
-	  ComputeAVG(fX[ix],Q,fPids[i],index,&cv,&std);
-	  f << scientific << fCV[i][ix] << "\t" << cv << endl;
-	}
-      f.close();
-    }
 }
