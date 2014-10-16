@@ -14,7 +14,7 @@ class Mini
 {
 
 public:
-  Mini(int rep, vector<LHAPDF::PDF*> pdf);
+  Mini(int rep, vector<LHAPDF::PDF*> pdf, int seed);
   ~Mini();
   double iterate(int* index);
   void ComputeEstimators(int,double,double,int,int*,

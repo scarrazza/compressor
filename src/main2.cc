@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   vector<int> fPids = pdf[0]->flavors();
 
   RandomGenerator *rg = new RandomGenerator(0,rep);
-  Mini *min = new Mini(rep,pdf);
+  Mini *min = new Mini(rep,pdf,0);
   double *erfcv = new double[trials];
   double *erfsd = new double[trials];
   double *erfsk = new double[trials];

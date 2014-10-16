@@ -73,13 +73,13 @@ void Mini::Compute4ERF(int n, double x, double q, int f, int* index,
 }
 
 
-Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf):
+Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf, int seed):
   fRep(rep),
   fNMut(5),
   fRg(NULL),
   fPDF(pdf)
 {
-  fRg = new RandomGenerator(0,0);
+  fRg = new RandomGenerator(0,seed);
 
   for (int i = 0; i < (int) fNMut; i++)
     fMut.push_back(new int[fRep]);

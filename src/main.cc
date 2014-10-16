@@ -11,15 +11,17 @@ int main(int argc, char **argv)
   string filename;
   int rep = 100;
   int NIte = 0;
-  if (argc > 3)
+  int seed = 0;
+  if (argc > 4)
     {
       rep = atoi(argv[1]);
       NIte = atoi(argv[2]);
       filename.assign(argv[3]);
+      seed = atoi(argv[4]);
     }
   else
     {
-      cout << "\nusage: compressor [desired replicas] [ite] [PDF set name]\n" << endl;
+      cout << "\nusage: compressor [desired replicas] [ite] [PDF set name] [seed]\n" << endl;
       exit(-1);
     }
 
@@ -38,7 +40,7 @@ int main(int argc, char **argv)
   // load a subarray
   double e = 0;
   stringstream log("");
-  Mini *min = new Mini(rep, pdf);
+  Mini *min = new Mini(rep, pdf, seed);
   for (int i = 0; i < NIte; i++)
     {
       e = min->iterate(index);
@@ -81,7 +83,14 @@ int main(int argc, char **argv)
   cout << "SKE: " << esk << endl;
   cout << "KUR: " << eku << endl;
   cout << "KOL: " << eko << endl;
-  
+
+  fstream ss;
+  stringstream ff("");
+  ff << filename << "/output.dat";
+  ss.open(ff.str().c_str(), ios::out|ios::app);
+  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eku << "\t" << eko << endl;
+  ss.close();
+
   // save erf log
   fstream f;
   stringstream a("");
