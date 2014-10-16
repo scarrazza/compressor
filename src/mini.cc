@@ -7,17 +7,83 @@
 #include "LHAPDF/LHAPDF.h"
 using namespace std;
 
+const double Ncv[] = { 
+    5.438370e+01,
+    2.458874e+01,
+    1.628602e+01,
+    1.275518e+01,
+    1.027590e+01,
+    7.220980e+00,
+    7.371100e+00,
+    5.795781e+00,
+    4.872242e+00,
+    4.752253e+00 
+  };
+
+const double Nsd[] = {
+    3.555516e+02,
+    3.239989e+02,
+    1.979903e+02,
+    7.890552e+01,
+    7.357068e+01,
+    4.311401e+01,
+    5.242788e+01,
+    2.920514e+01,
+    1.599078e+01,
+    1.399956e+01
+  };
+
+const double Nsk[] = {
+    1.911184e+03,
+    1.569870e+03,
+    1.405238e+03,
+    1.286394e+03,
+    1.146777e+03,
+    1.064095e+03,
+    9.962577e+02,
+    9.300864e+02,
+    8.756521e+02,
+    8.322396e+02
+  };
+
+const double Nku[] = {
+    3.004321e+05,
+    2.821193e+05,
+    2.698277e+05,
+    2.582972e+05,
+    2.469655e+05,
+    2.358219e+05,
+    2.255620e+05,
+    2.181980e+05,
+    2.120957e+05,
+    2.017760e+05
+  };
+  
+const double Nko[] = {
+    5.175174e+01,
+    2.720346e+01,
+    1.884665e+01,
+    1.488364e+01,
+    1.217091e+01,
+    1.058176e+01,
+    9.343748e+00,
+    8.351937e+00,
+    7.602888e+00,
+    7.048723e+00
+  };
+
 // compute
 void Mini::ComputeEstimators(int n, double x, double q, int f, int* index, 
 			     double *cv, double* std, double *ske, 
 			     double *kur, double *res)
 {
   double sum = 0, sq_sum = 0;
+  double *pdf = new double[n];
   for (size_t i = 0; i < n; i++)
     {
-      const double v = fPDF[index[i]]->xfxQ(f, x, q);
-      sum += v;
-      sq_sum += v*v; 
+      pdf[i] = fPDF[index[i]]->xfxQ(f, x, q);
+      sum += pdf[i];
+      sq_sum += pdf[i]*pdf[i]; 
     }
 
   *cv = sum / (double) n;
@@ -26,19 +92,20 @@ void Mini::ComputeEstimators(int n, double x, double q, int f, int* index,
   double sq_sum2 = 0, cub_sum = 0;
   for (size_t i = 0; i < n; i++)
     {
-      cub_sum += pow(fPDF[index[i]]->xfxQ(f, x, q) - *cv, 3.0);
-      sq_sum2 += pow(fPDF[index[i]]->xfxQ(f, x, q) - *cv, 4.0);
+      const double v = (pdf[i] - *cv);
+      cub_sum += v*v*v;
+      sq_sum2 += v*v*v*v;
     }
 
-  *ske = (cub_sum / n) / pow(*std, 3.0);
-  *kur = (sq_sum2 / n) / pow(*std, 4.0) - 3.0;
+  *ske = (cub_sum / n) / (*std * *std * *std);
+  *kur = (sq_sum2 / n) / (*std * *std * *std * *std) - 3.0;
 
   // Kolmogoroz
   for (int l = 0; l < 6; l++) res[l] = 0;
  
   for (size_t i = 0; i < n; i++)
     {
-      double v = fPDF[index[i]]->xfxQ(f, x, q);
+      const double v = pdf[i];
       if (v <= *cv -2* *std)
 	res[0] += 1;
       else if (v <= *cv - *std)
@@ -56,22 +123,9 @@ void Mini::ComputeEstimators(int n, double x, double q, int f, int* index,
     }
 
   for (int l = 0; l < 6; l++) res[l] /= (double) n;
+
+  delete[] pdf;
 }
-
-void Mini::Compute4ERF(int n, double x, double q, int f, int* index, 
-			     double *cv, double* std, double *ske, 
-			     double *kur, double *res)
-{
-  double sum = 0;
-  for (size_t i = 0; i < n; i++)
-    {
-      const double v = fPDF[index[i]]->xfxQ(f, x, q);
-      sum += v;
-    }
-
-  *cv = sum / (double) n;
-}
-
 
 Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf, int seed):
   fRep(rep),
@@ -221,6 +275,7 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf, int seed):
 	  delete[] res;
 	}
     }
+
   delete[] index;
 
 }
@@ -266,10 +321,17 @@ double Mini::iterate(int* index)
     for (int i = 0; i < (int) fX.size(); i++)
       {
 	double cv = 0, std = 0, sk = 0, kur = 0;
-	Compute4ERF(fRep, fX[i], Q, fPids[f], index, 
+	ComputeEstimators(fRep, fX[i], Q, fPids[f], index, 
 			  &cv, &std, &sk, &kur,res);
-	berf += pow(fCV[f][i] - cv, 2.0);
-	//berf += pow(fSD[f][i] - std, 2.0);
+	berf += pow(fCV[f][i] - cv,  2.0) / Ncv[fRep / 10 - 1];
+	berf += pow(fSD[f][i] - std, 2.0) / Nsd[fRep / 10 - 1];
+	berf += pow(fSK[f][i] - sk,  2.0) / Nsk[fRep / 10 - 1];
+	berf += pow(fKU[f][i] - kur, 2.0) / Nku[fRep / 10 - 1];
+	
+	for (int l = 0; l < 6; l++) {
+	  const double v = fKO[f][i][l] - res[l];
+	  berf += v*v / Nko[fRep / 10 - 1];
+	}
       }
 
   // set mut
@@ -303,10 +365,17 @@ double Mini::iterate(int* index)
         for (int j = 0; j < (int) fX.size(); j++)
 	  {
 	    double cv = 0, std = 0, kur = 0, sk = 0;
-	    Compute4ERF(fRep, fX[j], Q, fPids[f], fMut[i],
+	    ComputeEstimators(fRep, fX[j], Q, fPids[f], fMut[i],
 			      &cv,&std,&sk,&kur,res);
-	    erf[i] += pow(fCV[f][j] - cv, 2.0);
-	    //erf[i] += pow(fSD[f][j] - std, 2.0);
+	    erf[i] += pow(fCV[f][j] - cv,  2.0) / Ncv[fRep / 10 - 1];
+	    erf[i] += pow(fSD[f][j] - std, 2.0) / Nsd[fRep / 10 - 1];
+	    erf[i] += pow(fSK[f][j] - sk,  2.0) / Nsk[fRep / 10 - 1];
+	    erf[i] += pow(fKU[f][j] - kur, 2.0) / Nku[fRep / 10 - 1];
+	    
+	    for (int l = 0; l < 6; l++) {
+	      const double v = fKO[f][j][l] - res[l];
+	      erf[i] += v*v / Nko[fRep / 10 - 1];
+	    }
 	  }
     }
 
@@ -321,10 +390,7 @@ double Mini::iterate(int* index)
       }
 
   if (bestchi2 < berf)
-    {
-      for (int i = 0; i < (int) fRep; i++)
-        index[i] = fMut[id][i];
-    }
+    for (int i = 0; i < (int) fRep; i++) index[i] = fMut[id][i];   
   else bestchi2 = berf;
 
   delete[] erf;

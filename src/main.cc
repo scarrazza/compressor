@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   stringstream ff("");
   ff << filename << "/output.dat";
   ss.open(ff.str().c_str(), ios::out|ios::app);
-  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eku << "\t" << eko << endl;
+  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
   ss.close();
 
   // save erf log

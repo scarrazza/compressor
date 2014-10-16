@@ -19,8 +19,6 @@ public:
   double iterate(int* index);
   void ComputeEstimators(int,double,double,int,int*,
 			 double*,double*,double*,double*,double*);
-  void Compute4ERF(int,double,double,int,int*,
-			 double*,double*,double*,double*,double*);
   double GetCV(int i,int j) { return fCV[i][j]; }
   double GetSD(int i,int j) { return fSD[i][j]; }
   double GetSK(int i,int j) { return fSK[i][j]; }
