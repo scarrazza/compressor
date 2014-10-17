@@ -57,7 +57,7 @@ void plot()
   label.push_back("Error Function: Kurtosis");
   label.push_back("Error Function: Kolmogorov");
 
-
+  double cv[] = {4.410692e+00, 1.399956e+01, 8.294280e+02, 2.027068e+05, 7.014082e+00};
   for (int i = 0; i < (int) filename.size(); i++)
     {
       c->cd(i+1);
@@ -70,6 +70,13 @@ void plot()
       mg[i]->GetXaxis()->SetTitle("Number of Replicas");
       mg[i]->GetXaxis()->CenterTitle(true);      
       l->Draw("same");
+
+      TGraph *g = new TGraph(2);
+      g->SetPoint(0, 10, cv[i]);
+      g->SetPoint(1, 1000, cv[i]);
+      g->SetLineColor(kBlue);
+      g->SetLineStyle(2);
+      g->Draw("same,L");
     }
 
 }
