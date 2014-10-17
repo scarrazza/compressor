@@ -74,8 +74,8 @@ const double Nko[] = {
 
 // compute
 void Mini::ComputeEstimators(int n, double x, double q, int f, int* index, 
-			     double *cv, double* std, double *ske, 
-			     double *kur, double *res)
+			     double &cv, double &std, double &ske, 
+			     double &kur, double *res)
 {
   double sum = 0, sq_sum = 0;
   double *pdf = new double[n];
@@ -86,19 +86,19 @@ void Mini::ComputeEstimators(int n, double x, double q, int f, int* index,
       sq_sum += pdf[i]*pdf[i]; 
     }
 
-  *cv = sum / (double) n;
-  *std= sqrt(sq_sum / (double) n - *cv * *cv);
+  cv = sum / (double) n;
+  std= sqrt(sq_sum / (double) n - cv*cv);
 
   double sq_sum2 = 0, cub_sum = 0;
   for (size_t i = 0; i < n; i++)
     {
-      const double v = (pdf[i] - *cv);
+      const double v = (pdf[i] - cv);
       cub_sum += v*v*v;
       sq_sum2 += v*v*v*v;
     }
 
-  *ske = (cub_sum / n) / (*std * *std * *std);
-  *kur = (sq_sum2 / n) / (*std * *std * *std * *std) - 3.0;
+  ske = (cub_sum / n) / (std * std * std);
+  kur = (sq_sum2 / n) / (std * std * std * std) - 3.0;
 
   // Kolmogoroz
   for (int l = 0; l < 6; l++) res[l] = 0;
@@ -106,17 +106,17 @@ void Mini::ComputeEstimators(int n, double x, double q, int f, int* index,
   for (size_t i = 0; i < n; i++)
     {
       const double v = pdf[i];
-      if (v <= *cv -2* *std)
+      if (v <= cv -2*std)
 	res[0] += 1;
-      else if (v <= *cv - *std)
+      else if (v <= cv - std)
 	res[1] += 1;
-      else if (v <= *cv)
+      else if (v <= cv)
 	res[2] += 1;
-      else if (v <= *cv + *std)
+      else if (v <= cv + std)
 	res[3] += 1;
-      else if (v <= *cv + 2* *std)
+      else if (v <= cv + 2*std)
 	res[4] += 1;
-      else if (v > *cv + 2* *std)
+      else if (v > cv + 2*std)
 	res[5] += 1;
       else
 	cout << "ERROR" << endl;
@@ -263,7 +263,7 @@ Mini::Mini(int rep, vector<LHAPDF::PDF*> pdf, int seed):
 	  double cv = 0, std = 0, kur = 0, sk = 0;
 	  double *res = new double[6];
 	  ComputeEstimators((int) pdf.size() - 1,fX[j], Q, fPids[i], index, 
-			    &cv, &std, &sk, &kur, res);
+			    cv, std, sk, kur, res);
 	  fCV[i][j] = cv;
 	  fSD[i][j] = std;
 	  fSK[i][j] = sk;
@@ -322,7 +322,7 @@ double Mini::iterate(int* index)
       {
 	double cv = 0, std = 0, sk = 0, kur = 0;
 	ComputeEstimators(fRep, fX[i], Q, fPids[f], index, 
-			  &cv, &std, &sk, &kur,res);
+			  cv, std, sk, kur,res);
 	berf += pow(fCV[f][i] - cv,  2.0) / Ncv[fRep / 10 - 1];
 	berf += pow(fSD[f][i] - std, 2.0) / Nsd[fRep / 10 - 1];
 	berf += pow(fSK[f][i] - sk,  2.0) / Nsk[fRep / 10 - 1];
@@ -330,7 +330,7 @@ double Mini::iterate(int* index)
 	
 	for (int l = 0; l < 6; l++) {
 	  const double v = fKO[f][i][l] - res[l];
-	  berf += v*v / Nko[fRep / 10 - 1];
+	  berf += 5.0 * v*v / Nko[fRep / 10 - 1];
 	}
       }
 
@@ -344,10 +344,10 @@ double Mini::iterate(int* index)
     {
       const double g = fRg->GetRandomUniform();
       
-      int nmut = 4;
-      if (g <= 0.3) nmut = 1;
-      else if (g > 0.3 && g <= 0.6) nmut = 2;
-      else if (g > 0.6 && g <= 0.7) nmut = 3;
+      int nmut = 4; // 10%
+      if (g <= 0.3) nmut = 1; // 30%
+      else if (g > 0.3 && g <= 0.6) nmut = 2; // 30%
+      else if (g > 0.6 && g <= 0.7) nmut = 3; // 10%
      
       for (int t = 0; t < nmut; t++)
         {
@@ -366,7 +366,7 @@ double Mini::iterate(int* index)
 	  {
 	    double cv = 0, std = 0, kur = 0, sk = 0;
 	    ComputeEstimators(fRep, fX[j], Q, fPids[f], fMut[i],
-			      &cv,&std,&sk,&kur,res);
+			      cv,std,sk,kur,res);
 	    erf[i] += pow(fCV[f][j] - cv,  2.0) / Ncv[fRep / 10 - 1];
 	    erf[i] += pow(fSD[f][j] - std, 2.0) / Nsd[fRep / 10 - 1];
 	    erf[i] += pow(fSK[f][j] - sk,  2.0) / Nsk[fRep / 10 - 1];
@@ -374,7 +374,7 @@ double Mini::iterate(int* index)
 	    
 	    for (int l = 0; l < 6; l++) {
 	      const double v = fKO[f][j][l] - res[l];
-	      erf[i] += v*v / Nko[fRep / 10 - 1];
+	      erf[i] += 5.0 * v*v / Nko[fRep / 10 - 1];
 	    }
 	  }
     }

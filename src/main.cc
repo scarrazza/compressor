@@ -66,7 +66,7 @@ int main(int argc, char **argv)
       {
 	double cv = 0, std = 0, sk = 0, kur = 0;
 	min->ComputeEstimators(rep, min->GetX()[i], Q, fPids[f], index, 
-			       &cv, &std, &sk, &kur, res);	
+			       cv, std, sk, kur, res);	
 	ecv  += pow(min->GetCV(f,i) - cv, 2.0);
 	estd += pow(min->GetSD(f,i) - std, 2.0);
 	esk  += pow(min->GetSK(f,i) - sk, 2.0);

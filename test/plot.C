@@ -64,6 +64,7 @@ void plot()
       c->cd(i+1)->SetLogx();     
       c->cd(i+1)->SetTickx();
       c->cd(i+1)->SetTicky();
+      //c->cd(i+1)->SetGridx();
       
       mg[i]->SetTitle(label[i].c_str());
       mg[i]->Draw("A");

@@ -2,22 +2,45 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 #include "randomgenerator.h"
 #include "mini.h"
 using namespace std;
 
-void ComputeCV(int rep, double *x, double *cv, double *std)
+void ComputeCV(int rep, double *x, double &cv, double &up, double &dn)
 {
+  vector<double> xval;  
   double sum = 0, sq_sum = 0;
-  for (size_t i = 0; i < rep; i++)
-    {
-      const double v = x[i];
-      sum += v;
-      sq_sum += v*v; 
-    }
+  for (size_t i = 0; i < rep; i++) {
+    const double v = x[i];
+    sum += v;
+    xval.push_back(v);
+  }
 
-  *cv = sum / (double) rep;
-  *std= sqrt(sq_sum / (double) rep - *cv * *cv);
+  cv = sum / (double) rep;
+
+  vector<int> ntot;
+  vector<double> eps;
+  for (int i = 0; i < rep; i++)
+    {
+      ntot.push_back(0);
+      eps.push_back(fabs(x[i]-cv));
+      for (int z = 0; z < rep; z++)
+	{
+	  if (x[z] <= cv+eps[i] && x[z] >= cv-eps[i])
+	    ntot[i]++;
+	}
+    }
+  
+  int idx = std::find(ntot.begin(), ntot.end(), rep*0.68)-ntot.begin();
+  if (idx < 0 || idx >= rep)
+    {
+      idx = std::find(ntot.begin(), ntot.end(), rep*0.69)-ntot.begin();
+      if (idx < 0 || idx >= rep)
+	idx = std::find(ntot.begin(), ntot.end(), rep*0.70)-ntot.begin();
+    }
+  
+  up = eps[idx];
 }
 
 int main(int argc, char **argv)
@@ -77,7 +100,7 @@ int main(int argc, char **argv)
 	  {
 	    double cv = 0, std = 0, sk = 0, kur = 0;
 	    min->ComputeEstimators(rep, min->GetX()[i], 1.0, fPids[f], index, 
-				   &cv, &std, &sk, &kur, res);	
+				   cv, std, sk, kur, res);	
 	    ecv  += pow(min->GetCV(f,i) - cv, 2.0);
 	    estd += pow(min->GetSD(f,i) - std, 2.0);
 	    esk  += pow(min->GetSK(f,i) - sk, 2.0);
@@ -100,42 +123,47 @@ int main(int argc, char **argv)
 
   fstream f;
   
-  double cv = 0, std = 0;
-  ComputeCV(trials, erfcv, &cv, &std);
-  cout << "CV:  " << cv << "\t" << std << endl;
+  double cv = 0, up = 0, dn = 0;
+  ComputeCV(trials, erfcv, cv, up, dn);
+  cout << "CV:  " << cv << "\t" << up << endl;
 
   f.open("cv_set_r.dat", ios::out|ios::app);
-  f << fixed << rep << scientific << "\t" << cv << "\t" << std << endl;
+  f << fixed << rep << scientific << "\t" 
+    << cv << "\t" << up << endl;
   f.close();
 
-  ComputeCV(trials, erfsd, &cv, &std);
-  cout << "STD: " << cv << "\t" << std << endl;
+  ComputeCV(trials, erfsd, cv, up, dn);
+  cout << "STD: " << cv << "\t" << up << endl;
 
-  f.open("std_set_r.dat", ios::out|ios::app);
-  f << fixed << rep << scientific << "\t" << cv << "\t" << std << endl;
+  f.open("sd_set_r.dat", ios::out|ios::app);
+  f << fixed << rep << scientific << "\t" 
+    << cv << "\t" << up << endl;
   f.close();
 
-  ComputeCV(trials, erfsk, &cv, &std);
-  cout << "SKE: " << cv << "\t" << std << endl;
+  ComputeCV(trials, erfsk, cv, up, dn);
+  cout << "SKE: " << cv << "\t" << up  << endl;
 
   f.open("ske_set_r.dat", ios::out|ios::app);
-  f << fixed << rep << scientific << "\t" << cv << "\t" << std << endl;
+  f << fixed << rep << scientific << "\t" 
+    << cv << "\t" << up << endl;
   f.close();
 
-  ComputeCV(trials, erfku, &cv, &std);
-  cout << "KUR: " << cv << "\t" << std << endl;
+  ComputeCV(trials, erfku, cv, up, dn);
+  cout << "KUR: " << cv << "\t" << up << endl;
 
   f.open("kur_set_r.dat", ios::out|ios::app);
-  f << fixed << rep << scientific << "\t" << cv << "\t" << std << endl;
+  f << fixed << rep << scientific << "\t" 
+    << cv << "\t" << up << endl;
   f.close();
 
-  ComputeCV(trials, erfko, &cv, &std);
-  cout << "KOL: " << cv << "\t" << std << endl;
+  ComputeCV(trials, erfko, cv, up, dn);
+  cout << "KOL: " << cv << "\t" << up << endl;
 
   f.open("kol_set_r.dat", ios::out|ios::app);
-  f << fixed << rep << scientific << "\t" << cv << "\t" << std << endl;
+  f << fixed << rep << scientific << "\t" 
+    << cv << "\t" << up << endl;
   f.close();
-
+  
   delete[] erfcv;
   delete[] erfsd;
   delete[] erfsk;
