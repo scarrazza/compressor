@@ -330,7 +330,7 @@ double Mini::iterate(int* index)
 	
 	for (int l = 0; l < 6; l++) {
 	  const double v = fKO[f][i][l] - res[l];
-	  berf += 5.0 * v*v / Nko[fRep / 10 - 1];
+	  berf += v*v / Nko[fRep / 10 - 1];
 	}
       }
 
@@ -374,7 +374,7 @@ double Mini::iterate(int* index)
 	    
 	    for (int l = 0; l < 6; l++) {
 	      const double v = fKO[f][j][l] - res[l];
-	      erf[i] += 5.0 * v*v / Nko[fRep / 10 - 1];
+	      erf[i] += v*v / Nko[fRep / 10 - 1];
 	    }
 	  }
     }

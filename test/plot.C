@@ -24,10 +24,16 @@ void plot()
       file << "set_r/" << filename[i];
       stringstream file2("");
       file2 << "set_c/" << filename[i];
+      stringstream file3("");
+      file3 << "set_c2/" << filename[i];
+      stringstream file4("");
+      file4 << "set_c3/" << filename[i];
 
       TGraphErrors *g1 = new TGraphErrors(file.str().c_str(),"%lg %lg %lg");
       TGraphErrors *g2 = new TGraphErrors(file2.str().c_str(),"%lg %lg %lg");
-      
+      TGraphErrors *g3 = new TGraphErrors(file3.str().c_str(),"%lg %lg %lg");
+      TGraphErrors *g4 = new TGraphErrors(file4.str().c_str(),"%lg %lg %lg");
+
       g1->SetMarkerStyle(20);
       g1->SetMarkerColor(kBlue);
       g1->SetLineColor(kBlue);
@@ -36,13 +42,24 @@ void plot()
       g2->SetMarkerColor(kRed);
       g2->SetLineColor(kRed);
 
+      g3->SetMarkerStyle(25);
+      g3->SetMarkerColor(kGreen+1);
+      g3->SetLineColor(kGreen+1);
+
+      g4->SetMarkerStyle(24);
+
       mg[i] = new TMultiGraph();
       mg[i]->Add(g1,"p");
       mg[i]->Add(g2,"p");
+      mg[i]->Add(g3,"p");
+      mg[i]->Add(g4,"p");
+
       if (i == 0)
 	{
-	  l->AddEntry(g1,"Random","pl");
-	  l->AddEntry(g2,"Compressed","pl");
+	  l->AddEntry(g1,"Random (1000)","pl");
+	  l->AddEntry(g2,"Compressed 15k (20)","pl");
+	  l->AddEntry(g3,"Compressed 30k 5xKOL","pl");
+	  l->AddEntry(g4,"Compressed 30k","pl");
 	}
     }
  
