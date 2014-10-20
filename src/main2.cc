@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <vector>
 #include "randomgenerator.h"
 #include "mini.h"
 using namespace std;
@@ -19,6 +20,14 @@ void ComputeCV(int rep, double *x, double &cv, double &up, double &dn)
 
   cv = sum / (double) rep;
 
+  up = 0;
+  dn = 0;
+  int esc = (int) (rep*(1-0.68)/2);  
+  std::sort(xval.begin(),xval.end());
+  up = xval[xval.size()-1-esc];
+  dn = xval[esc];   
+  
+  /*
   vector<int> ntot;
   vector<double> eps;
   for (int i = 0; i < rep; i++)
@@ -41,6 +50,7 @@ void ComputeCV(int rep, double *x, double &cv, double &up, double &dn)
     }
   
   up = eps[idx];
+  */
 }
 
 int main(int argc, char **argv)
@@ -125,44 +135,61 @@ int main(int argc, char **argv)
   
   double cv = 0, up = 0, dn = 0;
   ComputeCV(trials, erfcv, cv, up, dn);
-  cout << "CV:  " << cv << "\t" << up << endl;
+  cout << "CV:  " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
 
-  f.open("cv_set_r.dat", ios::out|ios::app);
+  f.open("cv_set_r.dat", ios::out|ios::app);  
   f << fixed << rep << scientific << "\t" 
-    << cv << "\t" << up << endl;
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
 
   ComputeCV(trials, erfsd, cv, up, dn);
-  cout << "STD: " << cv << "\t" << up << endl;
+  cout << "STD: " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
 
   f.open("sd_set_r.dat", ios::out|ios::app);
   f << fixed << rep << scientific << "\t" 
-    << cv << "\t" << up << endl;
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
 
   ComputeCV(trials, erfsk, cv, up, dn);
-  cout << "SKE: " << cv << "\t" << up  << endl;
+  cout << "SKE: " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0  << endl;
 
   f.open("ske_set_r.dat", ios::out|ios::app);
   f << fixed << rep << scientific << "\t" 
-    << cv << "\t" << up << endl;
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
 
   ComputeCV(trials, erfku, cv, up, dn);
-  cout << "KUR: " << cv << "\t" << up << endl;
+  cout << "KUR: " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
 
   f.open("kur_set_r.dat", ios::out|ios::app);
   f << fixed << rep << scientific << "\t" 
-    << cv << "\t" << up << endl;
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
 
   ComputeCV(trials, erfko, cv, up, dn);
-  cout << "KOL: " << cv << "\t" << up << endl;
+  cout << "KOL: " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
 
   f.open("kol_set_r.dat", ios::out|ios::app);
   f << fixed << rep << scientific << "\t" 
-    << cv << "\t" << up << endl;
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
+
+  /*
+  fstream fi;
+  stringstream ss("");
+  ss << "set_r_" << rep << ".dat";
+  fi.open(ss.str().c_str(),ios::out);
+
+  for (int i = 0; i < trials; i++)
+    {
+      fi << scientific << erfcv[i] << "\t"
+	 << erfsd[i] << "\t"
+	 << erfsk[i] << "\t"
+	 << erfku[i] << "\t"
+	 << erfko[i] << endl;
+    }
+  fi.close();
+  */
   
   delete[] erfcv;
   delete[] erfsd;
