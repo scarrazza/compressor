@@ -59,7 +59,7 @@ int main(int argc, char **argv)
        << scientific << e << endl;
 
   // Compute other estimators
-  double ecv = 0, estd = 0, esk = 0, eku = 0, eko = 0;
+  double ecv = 0, ecv2 = 0, estd = 0, esk = 0, eku = 0, eko = 0;
   double *res = new double[6];
   for (int f = 0; f < (int) fPids.size(); f++)
     for (int i = 0; i < (int) min->GetX().size(); i++)
@@ -68,6 +68,7 @@ int main(int argc, char **argv)
 	min->ComputeEstimators(rep, min->GetX()[i], Q, fPids[f], index, 
 			       cv, std, sk, kur, res);	
 	ecv  += pow(min->GetCV(f,i) - cv, 2.0);
+	ecv2 += (min->GetCV(f,i) - cv) / min->GetSD(f,i);
 	estd += pow(min->GetSD(f,i) - std, 2.0);
 	esk  += pow(min->GetSK(f,i) - sk, 2.0);
 	eku  += pow(min->GetKU(f,i) - kur, 2.0);
@@ -79,6 +80,7 @@ int main(int argc, char **argv)
 
   cout << scientific;
   cout << "CV:  " << ecv << endl;
+  cout << "CV2: " << ecv2 << endl;
   cout << "STD: " << estd << endl;
   cout << "SKE: " << esk << endl;
   cout << "KUR: " << eku << endl;
@@ -88,7 +90,7 @@ int main(int argc, char **argv)
   stringstream ff("");
   ff << filename << "/output.dat";
   ss.open(ff.str().c_str(), ios::out|ios::app);
-  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
+  ss << scientific << ecv << "\t" << ecv2 << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
   ss.close();
 
   // save erf log

@@ -80,6 +80,7 @@ int main(int argc, char **argv)
   RandomGenerator *rg = new RandomGenerator(0,rep);
   Mini *min = new Mini(rep,pdf,0);
   double *erfcv = new double[trials];
+  double *erfcv2= new double[trials];
   double *erfsd = new double[trials];
   double *erfsk = new double[trials];
   double *erfku = new double[trials];
@@ -103,7 +104,7 @@ int main(int argc, char **argv)
 	  index[i] = id;
 	}
 
-      double ecv = 0, estd = 0, esk = 0, eku = 0, eko = 0;
+      double ecv = 0, ecv2 = 0, estd = 0, esk = 0, eku = 0, eko = 0;
       double *res = new double[6];
       for (int f = 0; f < (int) fPids.size(); f++)
 	for (int i = 0; i < (int) min->GetX().size(); i++)
@@ -112,6 +113,7 @@ int main(int argc, char **argv)
 	    min->ComputeEstimators(rep, min->GetX()[i], 1.0, fPids[f], index, 
 				   cv, std, sk, kur, res);	
 	    ecv  += pow(min->GetCV(f,i) - cv, 2.0);
+	    ecv2 += (min->GetCV(f,i) - cv) / min->GetSD(f,i);
 	    estd += pow(min->GetSD(f,i) - std, 2.0);
 	    esk  += pow(min->GetSK(f,i) - sk, 2.0);
 	    eku  += pow(min->GetKU(f,i) - kur, 2.0);
@@ -121,6 +123,7 @@ int main(int argc, char **argv)
 	  }
 
       erfcv[t] = ecv;
+      erfcv2[t]= ecv2;
       erfsd[t] = estd;
       erfsk[t] = esk;
       erfku[t] = eku;
@@ -138,6 +141,14 @@ int main(int argc, char **argv)
   cout << "CV:  " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
 
   f.open("cv_set_r.dat", ios::out|ios::app);  
+  f << fixed << rep << scientific << "\t" 
+    << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
+  f.close();
+
+  ComputeCV(trials, erfcv2, cv, up, dn);
+  cout << "CV2: " << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
+
+  f.open("cv2_set_r.dat", ios::out|ios::app);  
   f << fixed << rep << scientific << "\t" 
     << (dn+up)/2.0 << "\t" << up-(dn+up)/2.0 << endl;
   f.close();
@@ -192,6 +203,7 @@ int main(int argc, char **argv)
   */
   
   delete[] erfcv;
+  delete[] erfcv2;
   delete[] erfsd;
   delete[] erfsk;
   delete[] erfku;
