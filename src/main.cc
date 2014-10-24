@@ -59,7 +59,8 @@ int main(int argc, char **argv)
        << scientific << e << endl;
 
   // Compute other estimators
-  double ecv = 0, ecv2 = 0, estd = 0, esk = 0, eku = 0, eko = 0;
+  double ecv = 0, estd = 0, esk = 0, eku = 0, eko = 0;
+  double ecv2 = 0, estd2 = 0, esk2 = 0, eku2 = 0, eko2 = 0;
   double *res = new double[6];
   for (int f = 0; f < (int) fPids.size(); f++)
     for (int i = 0; i < (int) min->GetX().size(); i++)
@@ -68,13 +69,27 @@ int main(int argc, char **argv)
 	min->ComputeEstimators(rep, min->GetX()[i], Q, fPids[f], index, 
 			       cv, std, sk, kur, res);	
 	ecv  += pow(min->GetCV(f,i) - cv, 2.0);
-	ecv2 += (min->GetCV(f,i) - cv) / min->GetSD(f,i);
 	estd += pow(min->GetSD(f,i) - std, 2.0);
 	esk  += pow(min->GetSK(f,i) - sk, 2.0);
 	eku  += pow(min->GetKU(f,i) - kur, 2.0);
 	
 	for (int l = 0; l < 6; l++)
-	  eko += pow(min->GetKO(f,i,l) - res[l], 2.0);	      
+	  eko += pow(min->GetKO(f,i,l) - res[l], 2.0);	     
+
+	// for relative difference
+	if (fPids[f] == 21 && (min->GetX()[i] < 0.6 && min->GetX()[i] > 1e-3))
+	  {
+	    ecv2  += fabs( (min->GetCV(f,i) - cv)  / min->GetCV(f,i) );
+	    estd2 += fabs( (min->GetSD(f,i) - std) / min->GetSD(f,i) );
+	    esk2  += fabs( (min->GetSK(f,i) - sk)  / min->GetSK(f,i) );
+	    eku2  += fabs( (min->GetKU(f,i) - kur) / min->GetKU(f,i) );
+	    
+	    for (int l = 0; l < 6; l++)
+	      {
+		if (min->GetKO(f,i,l) != 0)
+		  eko2 += fabs( (min->GetKO(f,i,l) - res[l]) / min->GetKO(f,i,l) );	      
+	      }
+	  }	
       }
   delete[] res;
 
@@ -82,15 +97,25 @@ int main(int argc, char **argv)
   cout << "CV:  " << ecv << endl;
   cout << "CV2: " << ecv2 << endl;
   cout << "STD: " << estd << endl;
+  cout << "CV2: " << estd2 << endl;
   cout << "SKE: " << esk << endl;
+  cout << "CV2: " << esk2 << endl;
   cout << "KUR: " << eku << endl;
+  cout << "KU2: " << eku2 << endl;
   cout << "KOL: " << eko << endl;
+  cout << "KO2: " << eko2 << endl;
 
   fstream ss;
   stringstream ff("");
-  ff << filename << "/output.dat";
+  ff << filename << "/output_erf.dat";
   ss.open(ff.str().c_str(), ios::out|ios::app);
-  ss << scientific << ecv << "\t" << ecv2 << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
+  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
+  ss.close();
+
+  stringstream ff2("");
+  ff2 << filename << "/output_rel.dat";
+  ss.open(ff2.str().c_str(), ios::out|ios::app);
+  ss << scientific << ecv2 << "\t" << estd2 << "\t" << esk2 << "\t" << eku2 << "\t" << eko2 << endl;
   ss.close();
 
   // save erf log
