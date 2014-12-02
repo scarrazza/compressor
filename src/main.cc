@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   vector<EstimatorsS*> estS = min.GetStatEstimators();
 
   // Computing error function for random set
-  const int trials = 10;
+  const int trials = 1000;
   cout << "* Random trials: " << trials << endl;
   vector<int> index;
   double**  estMval = new double*[min.GetIDS().size()];
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
       min.setupminimizer(rep,N,rg);
 
       cout << "\n* Compressing:" << endl;
-      const int Nite = 50;
+      const int Nite = 15000;
       double e;
       for (int i = 0; i < Nite; i++)
         {
