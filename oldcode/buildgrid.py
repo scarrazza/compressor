@@ -2,22 +2,21 @@
 import os
 import sys
 import shutil
-from subprocess import *
 
-if len(sys.argv) < 3:
-    print "\nusage: ./buildgrid [prior set name] [compressed rep] \n"
+if len(sys.argv) < 2:
+    print "\nusage: ./buildgrid [prior set name] \n"
     exit()
 
 dirb  = sys.argv[1]
-rep   =  int(sys.argv[2])
 
-pdfdir = Popen(["lhapdf-config", "--datadir"], stdout=PIPE).communicate()[0]
-pdfdir = pdfdir.replace('\n','')
+pdfdir = "/opt/lhapdf6/share/LHAPDF/"
 
-f = open(dirb + '/replica_compression_' + str(rep) + '.dat','rb')
+f = open(dirb + 'replica.dat','rb')
 
-out = dirb + "_compressed_" + str(rep)
-
+tmp = f.readline().split()
+rep = int(tmp[1])
+base= tmp[0]
+out = base + "_compressed_" + str(rep)
 print "output:", out
 print "replicas:", rep
 
@@ -49,14 +48,14 @@ for i in f.readlines():
         b = str(index)
 
     print "copy ", a, "\t->\t", b
-    src = pdfdir + "/" + dirb + "/" + dirb + "_" + a + ".dat"
+    src = pdfdir + base + "/" + base + "_" + a + ".dat"
     dest= out + "/" + out + "_" + b + ".dat"
     shutil.copy(src,dest)
     index+=1
 
 f.close()
 
-src = pdfdir + "/" + dirb + "/" + dirb + ".info"
+src = pdfdir + base + "/" + base + ".info"
 dest= out + "/" + out + ".info"
 f = open(src,'rb')
 o = open(dest,'wb')
@@ -70,6 +69,7 @@ for i in f.readlines():
 o.close()
 f.close()
 
+    
 # replica 0
 xpdf = []
 xgrid = []
@@ -147,4 +147,5 @@ for s in range(len(qgrid)):
             w.write("\n")
     w.write("---\n")
 w.close()
+    
 

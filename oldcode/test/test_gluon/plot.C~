@@ -1,11 +1,11 @@
-void plot_rel()
+void plot()
 {
   vector<string> filename;
-  filename.push_back("cv.dat");  
-  filename.push_back("sd.dat");  
-  filename.push_back("sk.dat");  
-  filename.push_back("ku.dat");  
-  filename.push_back("ko.dat");
+  filename.push_back("cv_erf.dat");  
+  filename.push_back("sd_erf.dat");  
+  filename.push_back("sk_erf.dat");  
+  filename.push_back("ku_erf.dat");  
+  filename.push_back("ko_erf.dat");
   
   TMultiGraph** mg = new TMultiGraph*[filename.size()];
 
@@ -19,15 +19,15 @@ void plot_rel()
   for (int i = 0; i < (int) filename.size(); i++)
     {
       stringstream file("");
-      file << "set_r_rel/" << filename[i];
+      file << "set_r_erf/" << filename[i];
 
-      //stringstream file2("");
-      //file2 << "set_c_rel/" << filename[i];
+      stringstream file2("");
+      file2 << "set_c_erf/" << filename[i];
 
-      //TGraphErrors *comp = new TGraphErrors(file2.str().c_str(),"%lg %lg %lg");
-      //comp->SetMarkerStyle(20);
-      //comp->SetMarkerColor(kRed);
-      //comp->SetLineColor(kRed);
+      TGraphErrors *comp = new TGraphErrors(file2.str().c_str(),"%lg %lg %lg");
+      comp->SetMarkerStyle(20);
+      comp->SetMarkerColor(kRed);
+      comp->SetLineColor(kRed);
       TGraphErrors *g1 = new TGraphErrors(22);
       TGraphErrors *g2 = new TGraphErrors(22);
       TGraphErrors *g3 = new TGraphErrors(22);
@@ -70,11 +70,11 @@ void plot_rel()
       mg[i]->Add(g2,"p0");
       mg[i]->Add(g3,"p0");
       mg[i]->Add(g5,"p0");
-      //mg[i]->Add(comp,"p");
+      mg[i]->Add(comp,"p");
 
       if (i == 0)
 	{
-	  //l->AddEntry(comp,"Compressed (20)","p");
+	  l->AddEntry(comp,"Compressed 1#sigma(20)","p");
 	  l->AddEntry(g5,"Random Mean (1k)","p");
 	  l->AddEntry(g2,"Random Median (1k)","p");
 	  l->AddEntry(g3,"Random 50% c.l. (1k)","l");
@@ -88,11 +88,11 @@ void plot_rel()
   c->Divide(3,2);
 
   vector<string> label;
-  label.push_back("Relative difference: Central Value");
-  label.push_back("Relative difference: Standard Deviation");
-  label.push_back("Relative difference: Skewness");
-  label.push_back("Relative difference: Kurtosis");
-  label.push_back("Relative difference: Kolmogorov");
+  label.push_back("Error Function: Central Value");
+  label.push_back("Error Function: Standard Deviation");
+  label.push_back("Error Function: Skewness");
+  label.push_back("Error Function: Kurtosis");
+  label.push_back("Error Function: Kolmogorov");
 
   double Ncv[] = {
     4.095582e+00-3.591852e+00,
@@ -114,8 +114,7 @@ void plot_rel()
       mg[i]->GetXaxis()->SetTitle("Number of Replicas");
       mg[i]->GetXaxis()->CenterTitle(true);      
       l->Draw("same");
-      
-      /*
+               
       TGraph *g = new TGraph(2);
       g->SetPoint(0, 10, Ncv[i]);
       g->SetPoint(1, 1000, Ncv[i]);

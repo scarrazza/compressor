@@ -74,7 +74,7 @@ void plot()
 
       if (i == 0)
 	{
-	  l->AddEntry(comp,"Compressed (20)","p");
+	  l->AddEntry(comp,"Compressed 1#sigma(20)","p");
 	  l->AddEntry(g5,"Random Mean (1k)","p");
 	  l->AddEntry(g2,"Random Median (1k)","p");
 	  l->AddEntry(g3,"Random 50% c.l. (1k)","l");

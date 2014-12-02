@@ -118,7 +118,8 @@ int main(int argc, char **argv)
 	      eko += pow(min->GetKO(f,i,l) - res[l], 2.0);	      
 	    
 	    // for relative difference
-	    if (fPids[f] == 21 && (min->GetX()[i] < 0.6 && min->GetX()[i] > 1e-3))
+	    if (fPids[f] == 21 || abs(fPids[f]) == 1 || abs(fPids[f]) == 2 ||
+		abs(fPids[f]) == 3 )
 	      {
 		ecv2  += fabs( (min->GetCV(f,i) - cv)  / min->GetCV(f,i) );
 		estd2 += fabs( (min->GetSD(f,i) - std) / min->GetSD(f,i) );

@@ -1,146 +1,235 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include <sstream>
-#include <fstream>
-#include "mini.h"
+#include <cstdlib>
+#include <sys/stat.h>
+#include "LHAPDF/LHAPDF.h"
+#include "utils.hh"
+#include "Minimizer.hh"
+#include "Grid.hh"
+#include "Estimators.hh"
 using namespace std;
 
+void splash();
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  string filename;
-  int rep = 100;
-  int NIte = 0;
-  int seed = 0;
-  if (argc > 4)
-    {
-      rep = atoi(argv[1]);
-      NIte = atoi(argv[2]);
-      filename.assign(argv[3]);
-      seed = atoi(argv[4]);
-    }
-  else
-    {
-      cout << "\nusage: compressor [desired replicas] [ite] [PDF set name] [seed]\n" << endl;
-      exit(-1);
-    }
+  int    rep;
+  bool   compress = true;
+  string priorname;
+  if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
+  else { cout << "\n usage: ./compressor [REP] [PDF prior name]\n" << endl; exit(-1);}
+  if (argc > 3) compress = atoi(argv[3]);
 
-  // create folder
-  mkdir(filename.c_str(), 0777);
+  splash();
 
-  // load PDF set
-  const LHAPDF::PDFSet set(filename.c_str());
+  cout << "* Prior: " << priorname << endl;
+  cout << "* Desired compression: " << rep << endl;
+  cout << "* Creating folder " << priorname.c_str() << endl;
+  mkdir(priorname.c_str(),0777);
+  fstream f;
+
+  // allocate LHAPDF set
+  const LHAPDF::PDFSet set(priorname.c_str());
   vector<LHAPDF::PDF*> pdf = set.mkPDFs();
-  vector<int> fPids = pdf[0]->flavors();
 
-  // input vector
-  int *index = new int[rep];
-  for (int i = 0; i < rep; i++) index[i] = i+1;
+  // allocate common rg for random testing before fit
+  RandomGenerator *rg = new RandomGenerator(0,0);
+  Grid *x = new Grid();
 
-  // load a subarray
-  double e = 0;
-  stringstream log("");
-  Mini *min = new Mini(rep, pdf, seed);
-  for (int i = 0; i < NIte; i++)
+  const double Q = 1.0;
+  cout << "* X grid size: " << x->size() << endl;
+  Minimizer min(pdf,x,Q);
+
+  vector<EstimatorsM*> estM = min.GetMomentEstimators();
+  vector<EstimatorsS*> estS = min.GetStatEstimators();
+
+  // Computing error function for random set
+  const int trials = 10;
+  cout << "* Random trials: " << trials << endl;
+  vector<int> index;
+  double**  estMval = new double*[min.GetIDS().size()];
+  double*** estSval = new double**[min.GetIDS().size()];
+  for (size_t fl = 0; fl < min.GetIDS().size(); fl++) {
+      estMval[fl] = new double[x->size()];
+      estSval[fl] = new double*[x->size()];
+      for (int ix = 0; ix < x->size(); ix++)
+        estSval[fl][ix] = new double[6];
+    }
+
+  vector< vector<double> > erfMs;
+  vector< vector<double> > erfSs;
+  vector<double> t(trials,0.0);
+  for (size_t es = 0; es < estM.size(); es++) erfMs.push_back(t);
+  for (size_t es = 0; es < estS.size(); es++) erfSs.push_back(t);
+
+  for (int t = 0; t < trials; t++)
     {
-      e = min->iterate(index);
-      if ( i % 10 == 0)
+      cout << "* Processing trial " << t+1 << "/" << trials << "\r";
+      cout.flush();
+
+      index.resize(rep,0);
+      // generate random replicas, no duplicates
+      randomize(pdf.size()-1,rg,index);
+
+      // computing estimators
+      for (size_t es = 0; es < estM.size(); es++)
         {
-          cout << fixed << "ITE: " << i << "\t"
-               << scientific << e << endl;
-          log << fixed << i << "\t"
-               << scientific << e << endl;
+          for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
+            for (int ix = 0; ix < x->size(); ix++)
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+          erfMs[es][t] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
+        }
+
+      // computing estimators
+      for (size_t es = 0; es < estS.size(); es++)
+        {
+          for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
+            for (int ix = 0; ix < x->size(); ix++)
+              {
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+                for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
+              }
+          erfSs[es][t] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
+                              estSval,min.GetPriorStatEstValues()[es]);
         }
     }
+  cout << endl;
 
-  cout << fixed << "Final: " << NIte << "\t"
-       << scientific << e << endl;
-  log << fixed << NIte << "\t"
-       << scientific << e << endl;
+  // printing results
+  vector<double> N;
+  double cv = 0, md = 0, up50 = 0, dn50 = 0;
+  double up68 = 0, dn68 = 0, up90 = 0, dn90 = 0;
+  cout.precision(4);
+  f.precision(4);
+  f << scientific;
 
-  // Compute other estimators
-  double ecv = 0, estd = 0, esk = 0, eku = 0, eko = 0;
-  double ecv2 = 0, estd2 = 0, esk2 = 0, eku2 = 0, eko2 = 0;
-  double *res = new double[6];
-  for (int f = 0; f < (int) fPids.size(); f++)
-    for (int i = 0; i < (int) min->GetX().size(); i++)
-      {
-	double cv = 0, std = 0, sk = 0, kur = 0;
-	min->ComputeEstimators(rep, min->GetX()[i], Q, fPids[f], index, 
-			       cv, std, sk, kur, res);	
-	ecv  += pow(min->GetCV(f,i) - cv, 2.0);
-	estd += pow(min->GetSD(f,i) - std, 2.0);
-	esk  += pow(min->GetSK(f,i) - sk, 2.0);
-	eku  += pow(min->GetKU(f,i) - kur, 2.0);
-	
-	for (int l = 0; l < 6; l++)
-	  eko += pow(min->GetKO(f,i,l) - res[l], 2.0);	     
+  stringstream file0("");
+  file0 << priorname.c_str() << "/erf_random.dat";
+  f.open(file0.str().c_str(), ios::app | ios::out);
+  f << rep << "\t";
 
-	// for relative difference
-	if (fPids[f] == 21 && (min->GetX()[i] < 0.6 && min->GetX()[i] > 1e-3))
-	  {
-	    ecv2  += fabs( (min->GetCV(f,i) - cv)  / min->GetCV(f,i) );
-	    estd2 += fabs( (min->GetSD(f,i) - std) / min->GetSD(f,i) );
-	    esk2  += fabs( (min->GetSK(f,i) - sk)  / min->GetSK(f,i) );
-	    eku2  += fabs( (min->GetKU(f,i) - kur) / min->GetKU(f,i) );
-	    
-	    for (int l = 0; l < 6; l++)
-	      {
-		if (min->GetKO(f,i,l) != 0)
-		  eko2 += fabs( (min->GetKO(f,i,l) - res[l]) / min->GetKO(f,i,l) );	      
-	      }
-	  }	
-      }
-  delete[] res;
+  for (size_t es = 0; es < erfMs.size(); es++)
+    {
+      cout << "\n* Estimator: " << estM[es]->getName() << endl;
+      ComputeCV(erfMs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
+      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
+      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
+      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
+        << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
-  cout << scientific;
-  cout << "CV:  " << ecv << endl;
-  cout << "CV2: " << ecv2 << endl;
-  cout << "STD: " << estd << endl;
-  cout << "CV2: " << estd2 << endl;
-  cout << "SKE: " << esk << endl;
-  cout << "CV2: " << esk2 << endl;
-  cout << "KUR: " << eku << endl;
-  cout << "KU2: " << eku2 << endl;
-  cout << "KOL: " << eko << endl;
-  cout << "KO2: " << eko2 << endl;
+      if (es < 4) N.push_back(up68);
+    }
 
-  fstream ss;
-  stringstream ff("");
-  ff << filename << "/output_erf.dat";
-  ss.open(ff.str().c_str(), ios::out|ios::app);
-  ss << scientific << ecv << "\t" << estd << "\t" << esk << "\t" << eku << "\t" << eko << endl;
-  ss.close();
+  for (size_t es = 0; es < erfSs.size(); es++)
+    {
+      cout << "\n* Estimator: " << estS[es]->getName() << endl;
+      ComputeCV(erfSs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
+      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
+      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
+      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
+        << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
-  stringstream ff2("");
-  ff2 << filename << "/output_rel.dat";
-  ss.open(ff2.str().c_str(), ios::out|ios::app);
-  ss << scientific << ecv2 << "\t" << estd2 << "\t" << esk2 << "\t" << eku2 << "\t" << eko2 << endl;
-  ss.close();
-
-  // save erf log
-  fstream f;
-  stringstream a("");
-  a << filename << "/erf.dat";
-  f.open(a.str().c_str(), ios::out);
-  f << log.str() << endl;
+      N.push_back(up68);
+    }
+  f << endl;
   f.close();
 
-  // save replica id
-  stringstream b("");
-  b << filename << "/replica.dat";
-  f.open(b.str().c_str(), ios::out);
-  f << filename << "\t" << rep << endl;
-  for (int i = 0; i < rep; i++)
-    f << index[i] << endl;
-  f.close();
+  if (compress)
+    {
+      cout << "\n* Error Function Normalizations" << endl;
+      cout << "*   CV: " << N[0] << endl;
+      cout << "*   SD: " << N[1] << endl;
+      cout << "*   SK: " << N[2] << endl;
+      cout << "*   KU: " << N[3] << endl;
+      cout << "*   KO: " << N[4] << endl;
 
-  // cleaning memory
-  delete min;
-  for (int i = 0; i < (int) pdf.size(); i++)
-    if (pdf[i]) delete pdf[i];
-  pdf.clear();
+      rg->SetSeed(0);
+      min.setupminimizer(rep,N,rg);
+
+      cout << "\n* Compressing:" << endl;
+      const int Nite = 50;
+      double e;
+      for (int i = 0; i < Nite; i++)
+        {
+          e = min.iterate();
+          cout << "* Iteration " << i+1 << "/" << Nite << "\t ERF = " << e << "\r";
+          cout.flush();
+        }
+      cout << endl;
+
+      index = min.getIndex();
+
+      for (size_t es = 0; es < estM.size(); es++) erfMs[es][0] = 0.0;
+      for (size_t es = 0; es < estS.size(); es++) erfSs[es][0] = 0.0;
+
+      // computing estimators
+      for (size_t es = 0; es < estM.size(); es++)
+        {
+          for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
+            for (int ix = 0; ix < x->size(); ix++)
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+          erfMs[es][0] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
+        }
+
+      // computing estimators
+      for (size_t es = 0; es < estS.size(); es++)
+        {
+          for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
+            for (int ix = 0; ix < x->size(); ix++)
+              {
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+                for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
+              }
+          erfSs[es][0] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
+                              estSval,min.GetPriorStatEstValues()[es]);
+        }
+
+      stringstream file1("");
+      file1 << priorname.c_str() << "/erf_compression.dat";
+      f.open(file1.str().c_str(), ios::out | ios::app);
+      f << rep << "\t";
+      for (size_t es = 0; es < erfMs.size(); es++)
+        {
+          cout << "\n* Estimator: " << estM[es]->getName() << endl;
+          cout << scientific << "*   mean = " << erfMs[es][0] << endl;
+          f << erfMs[es][0] << "\t";
+        }
+
+      for (size_t es = 0; es < erfSs.size(); es++)
+        {
+          cout << "\n* Estimator: " << estS[es]->getName() << endl;
+          cout << scientific << "*   mean = " << erfSs[es][0] << endl;
+          f << erfSs[es][0] << "\t";
+        }
+      f << endl;
+      f.close();
+
+      stringstream file2("");
+      file2 << priorname.c_str() << "/replica_compression_" << rep << ".dat";
+      f.open(file2.str().c_str(), ios::out);
+      for (int i = 0; i < rep; i++) f << index[i] << endl;
+      f.close();
+
+    }
+
+  delete rg;
 
   return 0;
 }
 
+
+void splash(){
+cout << "   ___                                                    \n" <<
+"  / __\\___  _ __ ___  _ __  _ __ ___  ___ ___  ___  _ __  \n" <<
+" / /  / _ \\| '_ ` _ \\| '_ \\| '__/ _ \\/ __/ __|/ _ \\| '__| \n" <<
+"/ /__| (_) | | | | | | |_) | | |  __/\\__ \\__ \\ (_) | |    \n" <<
+"\\____/\\___/|_| |_| |_| .__/|_|  \\___||___/___/\\___/|_|    \n" <<
+"                     |_|                                  \n" << endl;
+cout << " ________ Authors: S. Carrazza, J. I. Latorre\n" << endl;
+}
