@@ -79,6 +79,13 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
     }
 }
 
+Minimizer::~Minimizer()
+{
+  _index.clear();
+  _ids.clear();
+  _mut.clear();
+}
+
 void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
 {
   _N = N;

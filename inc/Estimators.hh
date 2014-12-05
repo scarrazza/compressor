@@ -12,7 +12,7 @@ class EstimatorsM
 protected:
   string _name;
 public:
-  EstimatorsM(string name): _name(name) {}
+  EstimatorsM(string name): _name(name) {}  
   string  getName() const { return _name; }
   virtual double Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& fl,
                           vector<int> const& index,double const& x, double const& Q) const = 0;

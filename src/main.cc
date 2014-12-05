@@ -19,7 +19,7 @@ int main(int argc, char** argv)
   bool   compress = true;
   string priorname;
   if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
-  else { cout << "\n usage: ./compressor [REP] [PDF prior name]\n" << endl; exit(-1);}
+  else { cout << "\n usage: ./compressor [REP] [PDF prior name] [compress=true]\n" << endl; exit(-1);}
   if (argc > 3) compress = atoi(argv[3]);
 
   splash();
@@ -39,7 +39,8 @@ int main(int argc, char** argv)
   Grid *x = new Grid();
 
   const double Q = 1.0;
-  cout << "* X grid size: " << x->size() << endl;
+  cout << "* X grid size: " << x->size() << " points, x=["
+       << x->at(0) << ", " << x->at(x->size()-1) << "]" << endl;
   Minimizer min(pdf,x,Q);
 
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
@@ -219,6 +220,9 @@ int main(int argc, char** argv)
     }
 
   delete rg;
+  for (size_t i = 0; i < pdf.size(); i++)
+    if (pdf[i]) delete pdf[i];
+  pdf.clear();
 
   return 0;
 }

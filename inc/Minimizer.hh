@@ -13,6 +13,7 @@ class Minimizer
 {
 public:
   Minimizer(vector<LHAPDF::PDF*> const& pdf, Grid* const& x, double const& Q);
+  ~Minimizer();
   vector<EstimatorsM*> GetMomentEstimators()  const  { return _estM; }
   vector<EstimatorsS*> GetStatEstimators()  const  { return _estS;   }
   vector<double**> GetPriorMomentEstValues() const { return _estMval; }
