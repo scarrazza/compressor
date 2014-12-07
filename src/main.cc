@@ -196,6 +196,7 @@ int main(int argc, char** argv)
 
       for (size_t es = 0; es < estM.size(); es++) erfMs[es][0] = 0.0;
       for (size_t es = 0; es < estS.size(); es++) erfSs[es][0] = 0.0;
+      for (size_t es = 0; es < estS.size(); es++) erfCs[es][0] = 0.0;
 
       // computing estimators
       for (size_t es = 0; es < estM.size(); es++)
@@ -219,6 +220,15 @@ int main(int argc, char** argv)
                               estSval,min.GetPriorStatEstValues()[es]);
         }
 
+      // computing c estimators
+      for (size_t es = 0; es < estC.size(); es++)
+        {
+          vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];
+
+          erfCs[es][0] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
+        }
+
       stringstream file1("");
       file1 << priorname.c_str() << "/erf_compression.dat";
       f.open(file1.str().c_str(), ios::out | ios::app);
@@ -235,6 +245,13 @@ int main(int argc, char** argv)
           cout << "\n* Estimator: " << estS[es]->getName() << endl;
           cout << scientific << "*   mean = " << erfSs[es][0] << endl;
           f << erfSs[es][0] << "\t";
+        }
+
+      for (size_t es = 0; es < erfCs.size(); es++)
+        {
+          cout << "\n* Estimator: " << estC[es]->getName() << endl;
+          cout << scientific << "*   mean = " << erfCs[es][0] << endl;
+          f << erfCs[es][0] << "\t";
         }
       f << endl;
       f.close();
