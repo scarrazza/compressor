@@ -6,6 +6,7 @@ using std::vector;
 using std::string;
 
 #include "LHAPDF/LHAPDF.h"
+class Grid;
 
 class EstimatorsM
 {
@@ -29,6 +30,19 @@ public:
   int     getRegions() const { return _regions; }
   virtual vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& fl,
                           vector<int> const& index,double const& x, double const& Q) const = 0;
+};
+
+class EstimatorsC
+{
+protected:
+  int    _size;
+  string _name;
+public:
+  EstimatorsC(string name, int size): _size(size), _name(name) {}
+  string  getName() const { return _name; }
+  int     getSize() const { return _size; }
+  virtual vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+                          vector<int> const& index, Grid* const& x, double const& Q) const = 0;
 };
 
 class Kolmogorov: public EstimatorsS
@@ -85,4 +99,12 @@ public:
   moment6th(): EstimatorsM("6th moment") {}
   double Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& fl,
                   vector<int> const& index,double const& x, double const& Q) const;
+};
+
+class EigCorrelation: public EstimatorsC
+{
+public:
+  EigCorrelation(int ids, int nf): EstimatorsC("Eigvalues", ids*nf) {}
+  vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+                          vector<int> const& index, Grid* const& x, double const& Q) const;
 };

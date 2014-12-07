@@ -45,25 +45,29 @@ int main(int argc, char** argv)
 
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
   vector<EstimatorsS*> estS = min.GetStatEstimators();
+  vector<EstimatorsC*> estC = min.GetCorrEstimators();
 
   // Computing error function for random set
   const int trials = 1000;
   cout << "* Random trials: " << trials << endl;
   vector<int> index;
+  double*   estCval = new double[estC[0]->getSize()];
   double**  estMval = new double*[min.GetIDS().size()];
   double*** estSval = new double**[min.GetIDS().size()];
   for (size_t fl = 0; fl < min.GetIDS().size(); fl++) {
       estMval[fl] = new double[x->size()];
       estSval[fl] = new double*[x->size()];
       for (int ix = 0; ix < x->size(); ix++)
-        estSval[fl][ix] = new double[6];
+        estSval[fl][ix] = new double[estS[0]->getRegions()];
     }
 
   vector< vector<double> > erfMs;
   vector< vector<double> > erfSs;
+  vector< vector<double> > erfCs;
   vector<double> t(trials,0.0);
   for (size_t es = 0; es < estM.size(); es++) erfMs.push_back(t);
   for (size_t es = 0; es < estS.size(); es++) erfSs.push_back(t);
+  for (size_t es = 0; es < estC.size(); es++) erfCs.push_back(t);
 
   for (int t = 0; t < trials; t++)
     {
@@ -94,6 +98,14 @@ int main(int argc, char** argv)
               }
           erfSs[es][t] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
                               estSval,min.GetPriorStatEstValues()[es]);
+        }
+
+      for (size_t es = 0; es < estC.size(); es++)
+        {
+          vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];
+
+          erfCs[es][t] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
         }
     }
   cout << endl;
@@ -138,6 +150,21 @@ int main(int argc, char** argv)
 
       N.push_back(up68);
     }
+
+  for (size_t es = 0; es < erfCs.size(); es++)
+    {
+      cout << "\n* Estimator: " << estC[es]->getName() << endl;
+      ComputeCV(erfCs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
+      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
+      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
+      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
+        << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
+
+      //N.push_back(up68);
+    }
+
   f << endl;
   f.close();
 
@@ -149,6 +176,7 @@ int main(int argc, char** argv)
       cout << "*   SK: " << N[2] << endl;
       cout << "*   KU: " << N[3] << endl;
       cout << "*   KO: " << N[4] << endl;
+      //cout << "*   EIG: "<< N[5] << endl;
 
       rg->SetSeed(0);
       min.setupminimizer(rep,N,rg);
@@ -217,6 +245,8 @@ int main(int argc, char** argv)
       for (int i = 0; i < rep; i++) f << index[i] << endl;
       f.close();
 
+      cout << "\n* Please run now: ./buildgrid.py " << rep << " " << priorname << endl;
+      cout << "* Use validation.C for ERFs plots" << endl;
     }
 
   delete rg;

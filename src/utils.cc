@@ -156,6 +156,17 @@ double ERFS(int f, int nx, int reg, double ***x, double ***xavg)
   return res;
 }
 
+double ERFC(int size, double *x, double *xavg)
+{
+  double res = 0;
+  for (int l = 0; l < size; l++)
+    {
+      if (xavg[l] != 0)
+        res += pow( (x[l]-xavg[l])/xavg[l], 2.0);
+    }
+  return res;
+}
+
 void ComputeCV(vector<double> x, double& cv, double &md,
 	       double &dn50,double &up50,
 	       double &dn68,double &up68,

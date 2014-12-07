@@ -129,6 +129,7 @@ void validate()
   for (int i = 0; i < N; i++)
     {
       c->cd(i+1)->SetLogx();
+      c->cd(i+1)->SetLogy();
       c->cd(i+1)->SetTickx();
       c->cd(i+1)->SetTicky();
       

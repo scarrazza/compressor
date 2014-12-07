@@ -38,6 +38,7 @@ void randomize(int max, RandomGenerator *rg, vector<int> &index);
 
 double ERF(int f, int nx, double **x, double **xavg);
 double ERFS(int f, int nx, int reg, double ***x, double ***xavg);
+double ERFC(int size, double *x, double *xavg);
 
 void ComputeCV(vector<double> x, double& cv, double &md,
 	       double &dn50,double &up50,

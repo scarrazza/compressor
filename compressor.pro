@@ -14,7 +14,7 @@ HEADERS += inc/utils.hh \
     inc/Estimators.hh \
     inc/Grid.hh \
 
-INCLUDEPATH = inc/ $$system(lhapdf-config --incdir)
-LIBS += $$system(lhapdf-config --libs) $$system(gsl-config --libs)
+INCLUDEPATH = inc/ $$system(lhapdf-config --incdir) $$system(root-config --incdir)
+LIBS += $$system(lhapdf-config --libs) $$system(gsl-config --libs) $$system(root-config --glibs)
 
 OBJECTS_DIR = obj

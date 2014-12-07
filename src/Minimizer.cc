@@ -22,6 +22,8 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
 
   _estS.push_back(new Kolmogorov());
 
+  _estC.push_back(new EigCorrelation(2*_nf+1,_nf));
+
   // extracting active flavors
   _ids.resize(2*_nf+1);
   for (int i = -_nf; i <= _nf; i++) _ids[i+_nf] = i;
@@ -64,8 +66,17 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
         {
           vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_index,_x->at(ix),_Q);
           for (int l = 0; l < _estS[es]->getRegions(); l++) _estSval[es][fl][ix][l] = res[l];
-        }
+        }  
 
+  // filling estimatorsC
+  for (size_t i = 0; i < _estC.size(); i++)
+    {
+      _estCval.push_back(new double[_estC[i]->getSize()]);
+      vector<double> res = _estC[i]->Evaluate(_pdf,_ids,_index,_x,_Q);
+      for (int j = 0; j < _estC[i]->getSize(); j++) _estCval[i][j] = res[j];
+    }
+
+  // Preparing iteration containers
   _iteMval = new double*[_ids.size()];
   for (size_t fl = 0; fl < _ids.size(); fl++)
     _iteMval[fl] = new double[_x->size()];
@@ -77,13 +88,45 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
       for (int ix = 0; ix < x->size(); ix++)
         _iteSval[fl][ix] = new double[_estS[0]->getRegions()];
     }
+
+  _iteCval = new double[_estC[0]->getSize()];
 }
 
 Minimizer::~Minimizer()
 {
+  for (size_t i = 0; i < _estMval.size(); i++) {
+    for (size_t j = 0; j < _ids.size(); j++)
+      if (_estMval[i][j]) delete[] _estMval[i][j];
+    if (_estMval[i]) delete[] _estMval[i];
+    }
+  _estMval.clear();
+
+  for (size_t i = 0; i < _estSval.size(); i++) {
+    for (size_t j = 0; j < _ids.size(); j++) {
+      for (int z = 0; z < _x->size(); z++)
+        if (_estSval[i][j][z]) delete[] _estSval[i][j][z];
+      if (_estSval[i][j]) delete[] _estSval[i][j];
+      }
+    if (_estSval[i]) delete[] _estSval[i];
+    }
+  _estSval.clear();
+
+  for (size_t i = 0; i < _ids.size(); i++)
+    if (_iteMval[i]) delete[] _iteMval[i];
+  delete[] _iteMval;
+
+  for (size_t i = 0; i < _ids.size(); i++) {
+    for (int j = 0; j < _x->size(); j++)
+      if (_iteSval[i][j]) delete[] _iteSval[i][j];
+    if (_iteSval[i]) delete[] _iteSval[i];
+    }
+
+  delete[] _iteSval;
+  delete[] _iteCval;
   _index.clear();
   _ids.clear();
   _mut.clear();
+
 }
 
 void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
