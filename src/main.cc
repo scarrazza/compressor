@@ -162,7 +162,7 @@ int main(int argc, char** argv)
       f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
         << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
-      //N.push_back(up68);
+      N.push_back(up68);
     }
 
   f << endl;
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
       cout << "*   SK: " << N[2] << endl;
       cout << "*   KU: " << N[3] << endl;
       cout << "*   KO: " << N[4] << endl;
-      //cout << "*   EIG: "<< N[5] << endl;
+      cout << "*   EIG: "<< N[5] << endl;
 
       rg->SetSeed(0);
       min.setupminimizer(rep,N,rg);

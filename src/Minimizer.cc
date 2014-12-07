@@ -162,6 +162,14 @@ double Minimizer::iterate()
       berf += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
     }
 
+  for (size_t es = 0; es < _estC.size(); es++)
+    {
+      vector<double> res = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
+      for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = res[l];
+
+      berf += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
+    }
+
   // set mut
   for (int i = 0; i < _nmut; i++)
     for (int j = 0; j < _rep; j++)
@@ -206,6 +214,14 @@ double Minimizer::iterate()
                 for (int l = 0; l < _estS[es]->getRegions(); l++) _iteSval[fl][ix][l] = res[l];
               }
           erf[i] += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
+        }
+
+      for (size_t es = 0; es < _estC.size(); es++)
+        {
+          vector<double> res = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
+          for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = res[l];
+
+          erf[i] += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
         }
     }
 
