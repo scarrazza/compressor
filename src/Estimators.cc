@@ -193,12 +193,21 @@ vector<double> EigCorrelation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const v
             }
       }
 
+  /*
   TMatrixDSym mtm(TMatrixDSym::kAtA,m);
   TMatrixDSymEigen eigen(mtm);
   const TVectorD eigenVal = eigen.GetEigenValues();
 
   for (int i = 0; i < eigenVal.GetNoElements(); i++)
     res[i] = eigenVal(i);
+  */
+
+  TMatrixD mp(TMatrixD::kInverted,m);
+
+  TMatrixD r = m*mp;
+
+  res.resize(1,0);
+  for (int i = 0; i < _size; i++) res[0] += r(i,i);
 
   return res;
 }

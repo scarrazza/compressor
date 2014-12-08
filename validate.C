@@ -1,4 +1,4 @@
-const int N = 7;
+const int N = 8;
 
 void validate()
 {  
@@ -123,6 +123,7 @@ void validate()
   title[4] = "ERF 5th moment";
   title[5] = "ERF 6th moment";
   title[6] = "ERF Kolmogorov";
+  title[7] = "ERF Eigval. correlation";
 
   TCanvas *c = new TCanvas("c","",1600,700);
   c->Divide(4,2);

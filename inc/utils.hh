@@ -5,6 +5,8 @@
 #include "gsl/gsl_randist.h"
 using std::vector;
 
+#define VERSION "1.0.0"
+
 /**
  * @brief The RandomGenerator class
  * This class manages the random number generators

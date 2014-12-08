@@ -111,6 +111,10 @@ Minimizer::~Minimizer()
     }
   _estSval.clear();
 
+  for (size_t i = 0; i < _estCval.size(); i++)
+    if (_estCval[i]) delete[] _estCval[i];
+  _estCval.clear();
+
   for (size_t i = 0; i < _ids.size(); i++)
     if (_iteMval[i]) delete[] _iteMval[i];
   delete[] _iteMval;
