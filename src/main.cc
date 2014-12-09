@@ -9,6 +9,7 @@
 #include "Minimizer.hh"
 #include "Grid.hh"
 #include "Estimators.hh"
+#include "TMatrixD.h"
 using namespace std;
 
 void splash();
@@ -46,9 +47,10 @@ int main(int argc, char** argv)
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
   vector<EstimatorsS*> estS = min.GetStatEstimators();
   vector<EstimatorsC*> estC = min.GetCorrEstimators();
+  TMatrixD invPrior(min.GetPriorInvMatrix());
 
   // Computing error function for random set
-  const int trials = 1000;
+  const int trials = 15000;
   cout << "* Random trials: " << trials << endl;
   vector<int> index;
   double*   estCval = new double[estC[0]->getSize()];
@@ -102,11 +104,15 @@ int main(int argc, char** argv)
 
       for (size_t es = 0; es < estC.size(); es++)
         {
-          vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          TMatrixD r = m*invPrior;
+
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
 
           erfCs[es][t] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
         }
+
     }
   cout << endl;
 
@@ -223,11 +229,15 @@ int main(int argc, char** argv)
       // computing c estimators
       for (size_t es = 0; es < estC.size(); es++)
         {
-          vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          TMatrixD r = m*invPrior;
+
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
+          for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
 
           erfCs[es][0] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
         }
+
 
       stringstream file1("");
       file1 << priorname.c_str() << "/erf_compression.dat";

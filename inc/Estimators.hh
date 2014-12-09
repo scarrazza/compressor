@@ -4,7 +4,7 @@
 #include <string>
 using std::vector;
 using std::string;
-
+#include "TMatrixD.h"
 #include "LHAPDF/LHAPDF.h"
 class Grid;
 
@@ -41,7 +41,7 @@ public:
   EstimatorsC(string name, int size): _size(size), _name(name) {}
   string  getName() const { return _name; }
   int     getSize() const { return _size; }
-  virtual vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+  virtual TMatrixD Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
                           vector<int> const& index, Grid* const& x, double const& Q) const = 0;
 };
 
@@ -105,6 +105,6 @@ class EigCorrelation: public EstimatorsC
 {
 public:
   EigCorrelation(int ids, int nf): EstimatorsC("Eigvalues", ids*nf) {}
-  vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+  TMatrixD Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
                           vector<int> const& index, Grid* const& x, double const& Q) const;
 };

@@ -6,6 +6,7 @@
 #include "TDecompSVD.h"
 #include "TMatrixDBase.h"
 #include "TMatrixDSymEigen.h"
+#include "TDecompLU.h"
 using namespace std;
 
 double CentralValue::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
@@ -151,11 +152,9 @@ vector<double> Kolmogorov::Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& 
   return res;
 }
 
-vector<double> EigCorrelation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int> &ids,
+TMatrixD EigCorrelation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int> &ids,
                         vector<int> const& index, Grid * const &x, double const& Q) const
 {
-  vector<double> res(_size,0);
-
   const int n  = index.size();
   const int nx = _size / (int) ids.size();
   const int xx[3] = { 10, (int) (x->size()/2.0), 60};
@@ -202,12 +201,14 @@ vector<double> EigCorrelation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const v
     res[i] = eigenVal(i);
   */
 
-  TMatrixD mp(TMatrixD::kInverted,m);
-
+  /*
+  TMatrixD mp(m);
+  mp.Invert();
   TMatrixD r = m*mp;
 
-  res.resize(1,0);
+  res.resize(_size,0);
   for (int i = 0; i < _size; i++) res[0] += r(i,i);
+  */
 
-  return res;
+  return m;
 }

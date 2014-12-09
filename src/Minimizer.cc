@@ -2,6 +2,7 @@
 #include "Estimators.hh"
 #include "Grid.hh"
 #include "utils.hh"
+#include "TMatrixD.h"
 #include <iostream>
 using namespace std;
 
@@ -72,8 +73,12 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
   for (size_t i = 0; i < _estC.size(); i++)
     {
       _estCval.push_back(new double[_estC[i]->getSize()]);
-      vector<double> res = _estC[i]->Evaluate(_pdf,_ids,_index,_x,_Q);
-      for (int j = 0; j < _estC[i]->getSize(); j++) _estCval[i][j] = res[j];
+      TMatrixD m = _estC[i]->Evaluate(_pdf,_ids,_index,_x,_Q);
+      _invmatrix.ResizeTo(m); _invmatrix = m; _invmatrix.Invert();
+
+      TMatrixD r = m*_invmatrix;
+      for (int j = 0; j < _estC[i]->getSize(); j++) _estCval[i][j] = 0;
+      for (int j = 0; j < _estC[i]->getSize(); j++) _estCval[i][0] += r(j,j);
     }
 
   // Preparing iteration containers
@@ -166,13 +171,17 @@ double Minimizer::iterate()
       berf += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
     }
 
+
   for (size_t es = 0; es < _estC.size(); es++)
     {
-      vector<double> res = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
-      for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = res[l];
+      TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
+      TMatrixD r = m*_invmatrix;
+
+      for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
+      for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
       berf += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
-    }
+    }    
 
   // set mut
   for (int i = 0; i < _nmut; i++)
@@ -222,11 +231,14 @@ double Minimizer::iterate()
 
       for (size_t es = 0; es < _estC.size(); es++)
         {
-          vector<double> res = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
-          for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = res[l];
+          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
+          TMatrixD r = m*_invmatrix;
+
+          for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
+          for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
           erf[i] += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
-        }
+        }        
     }
 
   // Selection
