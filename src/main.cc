@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   TMatrixD invPrior(min.GetPriorInvMatrix());
 
   // Computing error function for random set
-  const int trials = 15000;
+  const int trials = 1000;
   cout << "* Random trials: " << trials << endl;
   vector<int> index;
   double*   estCval = new double[estC[0]->getSize()];
