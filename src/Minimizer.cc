@@ -151,7 +151,7 @@ void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
 double Minimizer::iterate()
 {
   const size_t Msize = _estM.size()-2;
-  double berf = 0;
+  double berf = 0;  
   for (size_t es = 0; es < Msize; es++)
     {
       for (size_t fl = 0; fl <_ids.size(); fl++)
@@ -170,8 +170,6 @@ double Minimizer::iterate()
           }
       berf += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
     }
-
-
   for (size_t es = 0; es < _estC.size(); es++)
     {
       TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
@@ -180,8 +178,9 @@ double Minimizer::iterate()
       for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
       for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
-      berf += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
+      berf += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];      
     }    
+
 
   // set mut
   for (int i = 0; i < _nmut; i++)
@@ -231,14 +230,15 @@ double Minimizer::iterate()
 
       for (size_t es = 0; es < _estC.size(); es++)
         {
-          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
+          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_x,_Q);
           TMatrixD r = m*_invmatrix;
 
           for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
           for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
           erf[i] += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
-        }        
+        }
+
     }
 
   // Selection

@@ -138,7 +138,8 @@ double ERF(int f, int nx, double **x, double **xavg)
     for (int ix = 0; ix < nx; ix++)
       {
         if (xavg[r][ix] != 0)
-          res += pow( (x[r][ix]-xavg[r][ix])/xavg[r][ix], 2.0);
+          res += pow( (x[r][ix]-xavg[r][ix]), 2.0);
+          //res += pow( (x[r][ix]-xavg[r][ix])/xavg[r][ix], 2.0);
       }
   return res;
 }
@@ -151,7 +152,8 @@ double ERFS(int f, int nx, int reg, double ***x, double ***xavg)
       for (int l = 0; l < reg; l++)
         {
           if (xavg[r][ix][l] != 0)
-            res += pow( (x[r][ix][l]-xavg[r][ix][l])/xavg[r][ix][l], 2.0);
+            res += pow( (x[r][ix][l]-xavg[r][ix][l]), 2.0);
+            //res += pow( (x[r][ix][l]-xavg[r][ix][l])/xavg[r][ix][l], 2.0);
         }
   return res;
 }
@@ -162,7 +164,8 @@ double ERFC(int size, double *x, double *xavg)
   for (int l = 0; l < size; l++)
     {
       if (xavg[l] != 0)
-        res += pow( (x[l]-xavg[l])/xavg[l], 2.0);
+        res += pow( (x[l]-xavg[l]), 2.0);
+        //res += pow( (x[l]-xavg[l])/xavg[l], 2.0);
     }
   return res;
 }
