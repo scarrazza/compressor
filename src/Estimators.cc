@@ -157,7 +157,7 @@ TMatrixD EigCorrelation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<
 {
   const int n  = index.size();
   const int nx = _size / (int) ids.size();
-  const int xx[3] = { 10, (int) (x->size()/2.0), 60};
+  const int xx[3] = { (int) (1/5.*x->size()), (int) (x->size()/2.0), (int) ((1-1/5.)*x->size())};
 
   TMatrixD m(_size,_size);
 

@@ -277,9 +277,27 @@ int main(int argc, char** argv)
     }
 
   delete rg;
+
+  delete[] estCval;
+
+  for (int i = 0; i < (int) min.GetIDS().size(); i++)
+    if (estMval[i]) delete[] estMval[i];
+  delete[] estMval;
+
+  for (int i = 0; i < (int) min.GetIDS().size(); i++)
+    {
+      for (int j = 0; j < (int)x->size(); j++)
+	if (estSval[i][j]) delete[] estSval[i][j];
+      if (estSval[i]) delete[] estSval[i];
+    }
+  delete[] estSval;
+
+  delete x;
+
   for (size_t i = 0; i < pdf.size(); i++)
     if (pdf[i]) delete pdf[i];
   pdf.clear();
+  
 
   return 0;
 }

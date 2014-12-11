@@ -7,6 +7,7 @@ class Grid
 {
 public:
   Grid();
+  ~Grid();
   int size() const { return _x.size(); }
   double at(int i) const { return _x[i]; }
 private:
