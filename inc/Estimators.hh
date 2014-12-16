@@ -4,7 +4,6 @@
 #include <string>
 using std::vector;
 using std::string;
-#include "TMatrixD.h"
 #include "LHAPDF/LHAPDF.h"
 class Grid;
 

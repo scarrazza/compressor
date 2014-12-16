@@ -2,11 +2,6 @@
 #include <iostream>
 #include "Estimators.hh"
 #include "Grid.hh"
-#include "TMatrixD.h"
-#include "TDecompSVD.h"
-#include "TMatrixDBase.h"
-#include "TMatrixDSymEigen.h"
-#include "TDecompLU.h"
 using namespace std;
 
 double CentralValue::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
@@ -159,12 +154,12 @@ vector<double> Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vect
   const int n = index.size();
   const int nx = 6;
   const int xx[6] = {
-    (int) (1/6.*x->size()),
-    (int) (2/6.*x->size()),
-    (int) (3/6.*x->size()),
-    (int) (4/6.*x->size()),
-    (int) (5/6.*x->size()),
-    (int) (6/6.*x->size())
+    (int) (1/7.*x->size()),
+    (int) (2/7.*x->size()),
+    (int) (3/7.*x->size()),
+    (int) (4/7.*x->size()),
+    (int) (5/7.*x->size()),
+    (int) (6/7.*x->size())
   };
 
   vector<double> res;

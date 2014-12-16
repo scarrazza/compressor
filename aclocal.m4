@@ -1121,4 +1121,3 @@ AC_SUBST([am__untar])
 
 m4_include([m4/gsl.m4])
 m4_include([m4/lhapdf.m4])
-m4_include([m4/root.m4])

@@ -2,7 +2,6 @@
 
 #include <vector>
 #include "LHAPDF/LHAPDF.h"
-#include "TMatrixD.h"
 using std::vector;
 
 class EstimatorsM;
