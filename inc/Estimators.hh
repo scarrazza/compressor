@@ -38,10 +38,10 @@ protected:
   int    _size;
   string _name;
 public:
-  EstimatorsC(string name, int size): _size(size), _name(name) {}
+  EstimatorsC(string name): _name(name) {}
   string  getName() const { return _name; }
   int     getSize() const { return _size; }
-  virtual TMatrixD Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+  virtual vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
                           vector<int> const& index, Grid* const& x, double const& Q) const = 0;
 };
 
@@ -101,10 +101,11 @@ public:
                   vector<int> const& index,double const& x, double const& Q) const;
 };
 
-class EigCorrelation: public EstimatorsC
+class Correlation: public EstimatorsC
 {
 public:
-  EigCorrelation(int ids, int nf): EstimatorsC("Eigvalues", ids*nf) {}
-  TMatrixD Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
+  Correlation(int size): EstimatorsC("Correlations") { 
+    _size = 0; for (int i = 1; i <= size-1; i++) _size += size-i; _size*=6;}
+  vector<double> Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
                           vector<int> const& index, Grid* const& x, double const& Q) const;
 };

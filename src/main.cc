@@ -9,7 +9,6 @@
 #include "Minimizer.hh"
 #include "Grid.hh"
 #include "Estimators.hh"
-#include "TMatrixD.h"
 using namespace std;
 
 void splash();
@@ -19,14 +18,20 @@ int main(int argc, char** argv)
   int    rep;
   bool   compress = true;
   string priorname;
+  double Q = 1.0;
   if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
-  else { cout << "\n usage: ./compressor [REP] [PDF prior name] [compress=true]\n" << endl; exit(-1);}
-  if (argc > 3) compress = atoi(argv[3]);
+  else { 
+    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [compress=true]\n" << endl; 
+    exit(-1);
+  }
+  if (argc >= 4) { Q = atof(argv[3]); }
+  if (argc == 5) { compress = atoi(argv[4]); }
 
   splash();
 
   cout << "* Prior: " << priorname << endl;
   cout << "* Desired compression: " << rep << endl;
+  cout << "* Input energy Q = " << Q << endl;
   cout << "* Creating folder " << priorname.c_str() << endl;
   mkdir(priorname.c_str(),0777);
   fstream f;
@@ -39,7 +44,6 @@ int main(int argc, char** argv)
   RandomGenerator *rg = new RandomGenerator(0,0);
   Grid *x = new Grid();
 
-  const double Q = 1.0;
   cout << "* X grid size: " << x->size() << " points, x=["
        << x->at(0) << ", " << x->at(x->size()-1) << "]" << endl;
   Minimizer min(pdf,x,Q);
@@ -47,7 +51,6 @@ int main(int argc, char** argv)
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
   vector<EstimatorsS*> estS = min.GetStatEstimators();
   vector<EstimatorsC*> estC = min.GetCorrEstimators();
-  TMatrixD invPrior(min.GetPriorInvMatrix());
 
   // Computing error function for random set
   const int trials = 1000;
@@ -101,18 +104,15 @@ int main(int argc, char** argv)
           erfSs[es][t] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
                               estSval,min.GetPriorStatEstValues()[es]);
         }
-
+      
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
-          TMatrixD r = m*invPrior;
-
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
-
+	  vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+	  for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];      
+      
           erfCs[es][t] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
         }
-
+      
     }
   cout << endl;
 
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
       cout << "*   SK: " << N[2] << endl;
       cout << "*   KU: " << N[3] << endl;
       cout << "*   KO: " << N[4] << endl;
-      cout << "*   EIG: "<< N[5] << endl;
+      cout << "*   CORR: "<< N[5] << endl;
 
       rg->SetSeed(0);
       min.setupminimizer(rep,N,rg);
@@ -225,19 +225,15 @@ int main(int argc, char** argv)
           erfSs[es][0] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
                               estSval,min.GetPriorStatEstValues()[es]);
         }
-
+      
       // computing c estimators
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
-          TMatrixD r = m*invPrior;
-
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
+          vector<double> res = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);	  
+	  for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = res[l];      
 
           erfCs[es][0] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
-        }
-
+        }      
 
       stringstream file1("");
       file1 << priorname.c_str() << "/erf_compression.dat";

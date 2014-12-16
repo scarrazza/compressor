@@ -23,7 +23,6 @@ public:
   vector<double**>  GetPriorMomentEstValues() const { return _estMval; }
   vector<double***> GetPriorStatEstValues()   const { return _estSval; }
   vector<double*>   GetPriorCorrEstValues()   const { return _estCval; }
-  TMatrixD          GetPriorInvMatrix()       const { return _invmatrix; }
   vector<int> GetIDS() const { return _ids; }
   double iterate();
   void setupminimizer(int rep, vector<double> N, RandomGenerator *rg);
@@ -40,7 +39,6 @@ private:
   vector<EstimatorsM*> _estM;
   vector<EstimatorsS*> _estS;
   vector<EstimatorsC*> _estC;
-  TMatrixD _invmatrix;
   vector<double**> _estMval;
   double** _iteMval;
   vector<double***> _estSval;
