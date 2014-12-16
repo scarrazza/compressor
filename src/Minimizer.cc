@@ -10,7 +10,8 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
   _nf(3),
   _Q(Q),
   _x(x),
-  _pdf(pdf)
+  _pdf(pdf),
+  _NX((int) x->size())
 {
   // computing estimators
   _estM.push_back(new CentralValue());
@@ -101,8 +102,9 @@ Minimizer::~Minimizer()
 
   for (size_t i = 0; i < _estSval.size(); i++) {
     for (size_t j = 0; j < _ids.size(); j++) {
-      for (int z = 0; z < _x->size(); z++)
+      for (int z = 0; z < _NX; z++){
         if (_estSval[i][j][z]) delete[] _estSval[i][j][z];
+      }
       if (_estSval[i][j]) delete[] _estSval[i][j];
       }
     if (_estSval[i]) delete[] _estSval[i];
@@ -118,7 +120,7 @@ Minimizer::~Minimizer()
   delete[] _iteMval;
 
   for (size_t i = 0; i < _ids.size(); i++) {
-    for (int j = 0; j < _x->size(); j++)
+    for (int j = 0; j < _NX; j++)
       if (_iteSval[i][j]) delete[] _iteSval[i][j];
     if (_iteSval[i]) delete[] _iteSval[i];
     }

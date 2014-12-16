@@ -45,6 +45,7 @@ private:
   vector<double*> _estCval;  
   double* _iteCval;
   vector<LHAPDF::PDF*> _pdf;
+  int _NX;
   int _rep;
   int _nmut;
   vector< vector<int> > _mut;
