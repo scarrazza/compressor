@@ -2,6 +2,11 @@
 #include <iostream>
 #include "Estimators.hh"
 #include "Grid.hh"
+#include "TMatrixD.h"
+#include "TDecompSVD.h"
+#include "TMatrixDBase.h"
+#include "TMatrixDSymEigen.h"
+#include "TDecompLU.h"
 using namespace std;
 
 double CentralValue::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
@@ -147,56 +152,15 @@ vector<double> Kolmogorov::Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& 
   return res;
 }
 
-vector<double> Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int> &ids,
-                        vector<int> const& index, Grid * const &x, double const& Q) const
+TMatrixD Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int> &ids, vector<int> const& index, Grid * const &x, double const& Q) const
 {
-
-  const int n = index.size();
-  const int nx = 6;
-  const int xx[6] = {
-    (int) (1/7.*x->size()),
-    (int) (2/7.*x->size()),
-    (int) (3/7.*x->size()),
-    (int) (4/7.*x->size()),
-    (int) (5/7.*x->size()),
-    (int) (6/7.*x->size())
-  };
-
-  vector<double> res;
-  
-  for (int ix = 0; ix < nx; ix++) 
-    for (int i = 0; i < ids.size(); i++)
-      for (int j = i+1; j < ids.size(); j++)
-	{
-	  double ab = 0, a = 0, b = 0;
-	  double sq_a = 0, sq_b = 0;
-	  for (int r = 0; r < n; r++)
-	    {
-	      const double v1 = pdf[index[r]]->xfxQ(ids[i], x->at(xx[ix]), Q);
-	      const double v2 = pdf[index[r]]->xfxQ(ids[j], x->at(xx[ix]), Q);
-	      ab +=  v1*v2;
-	      a += v1;
-	      b += v2;
-	      sq_a += v1*v1;
-	      sq_b += v2*v2;
-	    }
-	  ab /= n;
-	  a  /= n;
-	  b  /= n;
-	  
-	  double sig1 = sqrt(sq_a/n - a*a);
-	  double sig2 = sqrt(sq_b/n - b*b);
-	  
-	  double corr = (ab - a*b)/(sig1*sig2);
-	  res.push_back(corr);
-	}  
-  
-  return res;
-
-  /*
   const int n  = index.size();
   const int nx = _size / (int) ids.size();
-  const int xx[3] = { (int) (1/5.*x->size()), (int) (x->size()/2.0), (int) ((1-1/5.)*x->size())};
+  const int xx[3] = { 
+    (int) (1/5.*x->size()), 
+    (int) (1/2.*x->size()), 
+    (int) (4/5.*x->size())
+  };
 
   TMatrixD m(_size,_size);
 
@@ -229,8 +193,8 @@ vector<double> Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vect
 
               m(i,j) = (ab - a*b)/(sig1*sig2);
             }
-      }      
-  */
+      }
+
   /*
   TMatrixDSym mtm(TMatrixDSym::kAtA,m);
   TMatrixDSymEigen eigen(mtm);
@@ -249,5 +213,5 @@ vector<double> Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vect
   for (int i = 0; i < _size; i++) res[0] += r(i,i);
   */
 
-  //return m;
+  return m;
 }
