@@ -59,7 +59,7 @@ int main(int argc, char** argv)
   TMatrixD invPrior(min.GetPriorInvMatrix());
 
   // Computing error function for random set
-  const int trials = 100;
+  const int trials = 1000;
   cout << "\n* Random trials: " << trials << endl;
   vector<int> index;
   double*   estCval = new double[estC[0]->getSize()];
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
       min.setupminimizer(rep,N,rg);
 
       cout << "\n- Compressing:" << endl;
-      const int Nite = 50;
+      const int Nite = 15000;
       double e;
       for (int i = 0; i < Nite; i++)
         {
