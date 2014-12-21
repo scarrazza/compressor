@@ -19,8 +19,8 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
   _estM.push_back(new StdDeviation());
   _estM.push_back(new Skewness());
   _estM.push_back(new Kurtosis());
-  _estM.push_back(new moment5th());
-  _estM.push_back(new moment6th());
+  //_estM.push_back(new moment5th());
+  //_estM.push_back(new moment6th());
 
   _estS.push_back(new Kolmogorov());
 
@@ -151,7 +151,8 @@ void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
 
 double Minimizer::iterate()
 {
-  const size_t Msize = _estM.size()-2;
+  //const size_t Msize = _estM.size()-2;
+  const size_t Msize = _estM.size();
   double berf = 0;  
   for (size_t es = 0; es < Msize; es++)
     {
@@ -176,10 +177,10 @@ double Minimizer::iterate()
       TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x,_Q);
       TMatrixD r = m*_invmatrix;
 
-      for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
+      _iteCval[0] = 0;
       for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
-      berf += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];      
+      berf += ERFC(1, _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];      
     }    
 
 
@@ -234,10 +235,10 @@ double Minimizer::iterate()
           TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_x,_Q);
           TMatrixD r = m*_invmatrix;
 
-          for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[l] = 0;
+	  _iteCval[0] = 0;
           for (int l = 0; l < _estC[es]->getSize(); l++) _iteCval[0] += r(l,l);
 
-          erf[i] += ERFC(_estC[es]->getSize(), _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
+          erf[i] += ERFC(1, _iteCval, _estCval[es]) / _N[es+Msize+_estS.size()];
         }
 
     }

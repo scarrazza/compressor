@@ -34,7 +34,7 @@ RandomGenerator::RandomGenerator(int method, unsigned long int seed)
   const gsl_rng_type *T = rngs[method];
 
   fR = gsl_rng_alloc(T);
-  cout << "* Random Generator allocated: " << gsl_rng_name(fR) << endl;
+  cout << "- Random Generator   : " << gsl_rng_name(fR) << endl;
   gsl_rng_set(fR, seed);
 }
 

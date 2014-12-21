@@ -26,24 +26,31 @@ int main(int argc, char** argv)
   if (argc == 5) { compress = atoi(argv[4]); }
 
   splash();
-
-  cout << "- Prior: " << priorname << endl;
+  
+  cout << "-------------------------------------------" << endl;
+  cout << "- Setup summary                           -" << endl;
+  cout << "-------------------------------------------" << endl;
+  cout << "- Input PDF set      : " << priorname << endl;
   cout << "- Desired compression: " << rep << endl;
-  cout << "- Input energy Q = " << Q << endl;
-  cout << "- Creating folder " << priorname.c_str() << endl;
-  mkdir(priorname.c_str(),0777);
-  fstream f;
-
-  // allocate LHAPDF set
-  const LHAPDF::PDFSet set(priorname.c_str());
-  vector<LHAPDF::PDF*> pdf = set.mkPDFs();
+  cout << "- Input energy Qin   : " << Q << " GeV" << endl;
+  cout << "- Creating out.folder: " << priorname.c_str() << "/" << endl;
+  mkdir(priorname.c_str(),0777);  
 
   // allocate common rg for random testing before fit
   RandomGenerator *rg = new RandomGenerator(0,0);
   Grid *x = new Grid();
 
-  cout << "* X grid size: " << x->size() << " points, x=["
+  cout << "- X grid size        : " << x->size() << " points, x=["
        << x->at(0) << ", " << x->at(x->size()-1) << "]" << endl;
+  cout << "-------------------------------------------" << endl;
+
+  // allocate LHAPDF set
+  cout << "\n-------------------------------------------" << endl;
+  cout << "- Loading grid with LHAPDF6               -" << endl;
+  cout << "-------------------------------------------" << endl;
+  const LHAPDF::PDFSet set(priorname.c_str());
+  vector<LHAPDF::PDF*> pdf = set.mkPDFs();
+ 
   Minimizer min(pdf,x,Q);
 
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
@@ -52,8 +59,8 @@ int main(int argc, char** argv)
   TMatrixD invPrior(min.GetPriorInvMatrix());
 
   // Computing error function for random set
-  const int trials = 1000;
-  cout << "* Random trials: " << trials << endl;
+  const int trials = 100;
+  cout << "\n* Random trials: " << trials << endl;
   vector<int> index;
   double*   estCval = new double[estC[0]->getSize()];
   double**  estMval = new double*[min.GetIDS().size()];
@@ -109,10 +116,10 @@ int main(int argc, char** argv)
           TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
           TMatrixD r = m*invPrior;
 
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
+	  estCval[0] = 0;
           for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
 
-          erfCs[es][t] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
+          erfCs[es][t] += ERFC(1, estCval, min.GetPriorCorrEstValues()[es]);
         }
 
     }
@@ -123,6 +130,7 @@ int main(int argc, char** argv)
   double cv = 0, md = 0, up50 = 0, dn50 = 0;
   double up68 = 0, dn68 = 0, up90 = 0, dn90 = 0;
   cout.precision(4);
+  fstream f;
   f.precision(4);
   f << scientific;
 
@@ -133,26 +141,27 @@ int main(int argc, char** argv)
 
   for (size_t es = 0; es < erfMs.size(); es++)
     {
-      cout << "\n* Estimator: " << estM[es]->getName() << endl;
+      cout << "\n- Estimator: " << estM[es]->getName() << endl;
       ComputeCV(erfMs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
-      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
-      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
-      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
-      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      cout << scientific << "-   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "- [-50%cl,+50%cl] = " << dn50 << " " << up50 << endl;
+      cout << scientific << "- [-68%cl,+68%cl] = " << dn68 << " " << up68 << endl;
+      cout << scientific << "- [-90%cl,+90%cl] = " << dn90 << " " << up90 << endl;
       f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
         << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
-      if (es < 4) N.push_back(up68);
+      //if (es < 4) N.push_back(up68);
+      N.push_back(up68);
     }
 
   for (size_t es = 0; es < erfSs.size(); es++)
     {
-      cout << "\n* Estimator: " << estS[es]->getName() << endl;
+      cout << "\n- Estimator: " << estS[es]->getName() << endl;
       ComputeCV(erfSs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
-      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
-      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
-      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
-      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      cout << scientific << "-   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "- [-50%cl,+50%cl] = " << dn50 << " " << up50 << endl;
+      cout << scientific << "- [-68%cl,+68%cl] = " << dn68 << " " << up68 << endl;
+      cout << scientific << "- [-90%cl,+90%cl] = " << dn90 << " " << up90 << endl;
       f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
         << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
@@ -161,12 +170,12 @@ int main(int argc, char** argv)
 
   for (size_t es = 0; es < erfCs.size(); es++)
     {
-      cout << "\n* Estimator: " << estC[es]->getName() << endl;
+      cout << "\n- Estimator: " << estC[es]->getName() << endl;
       ComputeCV(erfCs[es],cv, md, dn50, up50, dn68, up68, dn90, up90);
-      cout << scientific << "*   mean,median = " << cv << " " << md << endl;
-      cout << scientific << "* -50%cl,+50%cl = " << dn50 << " " << up50 << endl;
-      cout << scientific << "* -68%cl,+68%cl = " << dn68 << " " << up68 << endl;
-      cout << scientific << "* -90%cl,+90%cl = " << dn90 << " " << up90 << endl;
+      cout << scientific << "-   mean,median = " << cv << " " << md << endl;
+      cout << scientific << "- [-50%cl,+50%cl] = " << dn50 << " " << up50 << endl;
+      cout << scientific << "- [-68%cl,+68%cl] = " << dn68 << " " << up68 << endl;
+      cout << scientific << "- [-90%cl,+90%cl] = " << dn90 << " " << up90 << endl;
       f << cv << "\t" << md << "\t" << dn50 << "\t" << up50 << "\t"
         << dn68 << "\t" << up68 << "\t" << dn90 << "\t" << up90 << "\t";
 
@@ -178,19 +187,19 @@ int main(int argc, char** argv)
 
   if (compress)
     {
-      cout << "\n* Error Function Normalizations" << endl;
-      cout << "*   CV: " << N[0] << endl;
-      cout << "*   SD: " << N[1] << endl;
-      cout << "*   SK: " << N[2] << endl;
-      cout << "*   KU: " << N[3] << endl;
-      cout << "*   KO: " << N[4] << endl;
-      cout << "*   EIG: "<< N[5] << endl;
+      cout << "\n- Error Function Normalizations" << endl;
+      cout << "-   CV : " << N[0] << endl;
+      cout << "-   SD : " << N[1] << endl;
+      cout << "-   SK : " << N[2] << endl;
+      cout << "-   KU : " << N[3] << endl;
+      cout << "-   KO : " << N[4] << endl;
+      cout << "-   EIG: " << N[5] << endl;
 
       rg->SetSeed(0);
       min.setupminimizer(rep,N,rg);
 
-      cout << "\n* Compressing:" << endl;
-      const int Nite = 15000;
+      cout << "\n- Compressing:" << endl;
+      const int Nite = 50;
       double e;
       for (int i = 0; i < Nite; i++)
         {
@@ -234,10 +243,10 @@ int main(int argc, char** argv)
           TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
           TMatrixD r = m*invPrior;
 
-          for (int l = 0; l < estC[es]->getSize(); l++) estCval[l] = 0;
+          estCval[0] = 0;
           for (int l = 0; l < estC[es]->getSize(); l++) estCval[0] += r(l,l);
 
-          erfCs[es][0] += ERFC(estC[es]->getSize(), estCval, min.GetPriorCorrEstValues()[es]);
+          erfCs[es][0] += ERFC(1, estCval, min.GetPriorCorrEstValues()[es]);
         }
 
 
@@ -247,22 +256,22 @@ int main(int argc, char** argv)
       f << rep << "\t";
       for (size_t es = 0; es < erfMs.size(); es++)
         {
-          cout << "\n* Estimator: " << estM[es]->getName() << endl;
-          cout << scientific << "*   mean = " << erfMs[es][0] << endl;
+          cout << "\n- Estimator: " << estM[es]->getName() << endl;
+          cout << scientific << "-   mean = " << erfMs[es][0] << endl;
           f << erfMs[es][0] << "\t";
         }
 
       for (size_t es = 0; es < erfSs.size(); es++)
         {
-          cout << "\n* Estimator: " << estS[es]->getName() << endl;
-          cout << scientific << "*   mean = " << erfSs[es][0] << endl;
+          cout << "\n- Estimator: " << estS[es]->getName() << endl;
+          cout << scientific << "-   mean = " << erfSs[es][0] << endl;
           f << erfSs[es][0] << "\t";
         }
 
       for (size_t es = 0; es < erfCs.size(); es++)
         {
-          cout << "\n* Estimator: " << estC[es]->getName() << endl;
-          cout << scientific << "*   mean = " << erfCs[es][0] << endl;
+          cout << "\n- Estimator: " << estC[es]->getName() << endl;
+          cout << scientific << "-   mean = " << erfCs[es][0] << endl;
           f << erfCs[es][0] << "\t";
         }
       f << endl;
@@ -274,18 +283,16 @@ int main(int argc, char** argv)
       for (int i = 0; i < rep; i++) f << index[i] << endl;
       f.close();
 
-      cout << "\n* Please run now: ./buildgrid.py " << rep << " " << priorname << endl;
-      cout << "* Use validation.C for ERFs plots" << endl;
+      cout << "\n- In order to create the compressed grid in the LHAPDF6 format" << endl;
+      cout << "  Please run now: ./compressor_buildgrid " << rep << " " << priorname << endl;
+      cout << "- Use compressor_validate.C in order to generate the ERFs plots\n" << endl;
     }
 
   delete rg;
-
   delete[] estCval;
-
   for (int i = 0; i < (int) min.GetIDS().size(); i++)
     if (estMval[i]) delete[] estMval[i];
   delete[] estMval;
-
   for (int i = 0; i < (int) min.GetIDS().size(); i++)
     {
       for (int j = 0; j < (int)x->size(); j++)
@@ -293,13 +300,10 @@ int main(int argc, char** argv)
       if (estSval[i]) delete[] estSval[i];
     }
   delete[] estSval;
-
   delete x;
-
   for (size_t i = 0; i < pdf.size(); i++)
     if (pdf[i]) delete pdf[i];
   pdf.clear();
-  
 
   return 0;
 }

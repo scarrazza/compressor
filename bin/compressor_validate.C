@@ -1,4 +1,4 @@
-const int N = 8;
+const int N = 6;
 
 void compressor_validate()
 {  
@@ -120,13 +120,11 @@ void compressor_validate()
   title[1] = "ERF Standard deviation";
   title[2] = "ERF Skewness";
   title[3] = "ERF Kurtosis";  
-  title[4] = "ERF 5th moment";
-  title[5] = "ERF 6th moment";
-  title[6] = "ERF Kolmogorov";
-  title[7] = "ERF correlation trace";
+  title[4] = "ERF Kolmogorov";
+  title[5] = "ERF Correlation";
 
-  TCanvas *c = new TCanvas("c","",1600,700);
-  c->Divide(4,2);
+  TCanvas *c = new TCanvas("c","Error function plots",1200,700);
+  c->Divide(3,2);
   for (int i = 0; i < N; i++)
     {
       c->cd(i+1)->SetLogx();
