@@ -18,12 +18,17 @@ int main(int argc, char** argv)
 {
   int    rep;
   bool   compress = true;
+  unsigned long int seed = 0;
   string priorname;
   double Q = 1.0;  
   if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
-  else { cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [compress=true]\n" << endl; exit(-1);}
+  else { 
+    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [seed=0] [compress=true]\n" << endl; 
+    exit(-1);
+  }
   if (argc >= 4) { Q = atof(argv[3]); }
-  if (argc == 5) { compress = atoi(argv[4]); }
+  if (argc >= 5) { seed = atoi(argv[4]); }
+  if (argc >= 6) { compress = atoi(argv[5]); }
 
   splash();
   
@@ -37,7 +42,8 @@ int main(int argc, char** argv)
   mkdir(priorname.c_str(),0777);  
 
   // allocate common rg for random testing before fit
-  RandomGenerator *rg = new RandomGenerator(0,0);
+  cout << "- Seed               : " << seed << endl;
+  RandomGenerator *rg = new RandomGenerator(0,seed);
   Grid *x = new Grid();
 
   cout << "- X grid size        : " << x->size() << " points, x=["
