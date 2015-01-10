@@ -11,7 +11,7 @@ $ git clone https://github.com/scarrazza/compressor.git
 ```
 ## Installation
 
-Compressor requires [LHAPDF6](), [ROOT]() and [GSL](). 
+Compressor requires [LHAPDF6](http://lhapdf.hepforge.org/), [ROOT](http://root.cern.ch/) and [GSL](http://www.gnu.org/software/gsl/). 
 Download the code and compile using the configure script:
 
 ```Shell
