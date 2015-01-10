@@ -1,3 +1,7 @@
+// Compressor - January 2015
+// Author:  Stefano Carrazza
+// Contact: stefano.carrazza@mi.infn.it
+
 #include "Minimizer.hh"
 #include "Estimators.hh"
 #include "Grid.hh"

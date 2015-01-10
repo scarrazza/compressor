@@ -1,3 +1,6 @@
+// Compressor - January 2015
+// Author:  Stefano Carrazza
+// Contact: stefano.carrazza@mi.infn.it
 #pragma once
 
 #include <vector>

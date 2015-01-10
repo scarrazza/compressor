@@ -1,3 +1,7 @@
+// Compressor - January 2015
+// Author:  Stefano Carrazza
+// Contact: stefano.carrazza@mi.infn.it
+
 #include <iostream>
 #include <string>
 #include <vector>
