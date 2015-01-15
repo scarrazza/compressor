@@ -107,7 +107,7 @@ public:
 class Correlation: public EstimatorsC
 {
 public:
-  Correlation(int ids, int nf): EstimatorsC("Correlation", ids*nf) {}
+  Correlation(int ids): EstimatorsC("Correlation", ids*3) {}
   TMatrixD Evaluate(vector<LHAPDF::PDF*> const& pdf, vector<int> const& ids,
                           vector<int> const& index, Grid* const& x, double const& Q) const;
 };

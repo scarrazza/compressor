@@ -28,7 +28,7 @@ Minimizer::Minimizer(vector<LHAPDF::PDF*> const& pdf,
 
   _estS.push_back(new Kolmogorov());
 
-  _estC.push_back(new Correlation(2*_nf+1,_nf));
+  _estC.push_back(new Correlation(2*_nf+1));
 
   // extracting active flavors
   _ids.resize(2*_nf+1);
