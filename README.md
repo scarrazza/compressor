@@ -35,7 +35,7 @@ The first 2 arguments are required:
 - *[PDF prior name]* -> the name of prior LHAPDF6 grid
 - *[energy Q]* -> the input energy scale used for the compression algorithm (default = 1 GeV)
 - *[seed]* -> the random number seed (default = 0)
-- *[compress]* -> switch on/off minimization (default = true)
+- *[compress]* -> switches on/off minimization (default = true)
  
 ### Output
 

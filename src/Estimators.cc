@@ -35,7 +35,7 @@ double StdDeviation::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
       sq_sum += v*v;
     }
 
-  return sqrt(sq_sum / n - sum/n * sum/n);
+  return sqrt(sq_sum / (n-1) - n/(n-1) * sum/n * sum/n);
 }
 
 double Skewness::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
@@ -194,7 +194,7 @@ TMatrixD Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int
               double sig1 = sqrt(sq_a/n - a*a);
               double sig2 = sqrt(sq_b/n - b*b);
 
-              m(i,j) = (ab - a*b)/(sig1*sig2);
+              m(i,j) = n/(n-1)*(ab - a*b)/(sig1*sig2);
             }
       }
 
