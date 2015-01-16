@@ -191,8 +191,8 @@ TMatrixD Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int
               a  /= n;
               b  /= n;
 
-              double sig1 = sqrt(sq_a/n - a*a);
-              double sig2 = sqrt(sq_b/n - b*b);
+              double sig1 = sqrt(sq_a/(n-1) - n/(n-1)*a*a);
+              double sig2 = sqrt(sq_b/(n-1) - n/(n-1)*b*b);
 
               m(i,j) = n/(n-1)*(ab - a*b)/(sig1*sig2);
             }

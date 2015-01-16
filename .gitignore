@@ -1,0 +1,10 @@
+*.o
+bin/*
+Makefile
+config.log
+config.status
+inc/Makefile
+inc/config.h
+inc/stamp-h1
+src/.deps/
+src/Makefile
