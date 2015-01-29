@@ -8,3 +8,4 @@ inc/config.h
 inc/stamp-h1
 src/.deps/
 src/Makefile
+*~
