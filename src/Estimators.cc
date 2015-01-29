@@ -12,25 +12,25 @@
 #include "TDecompLU.h"
 using namespace std;
 
-double CentralValue::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
   double res = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
-    res += pdf[index[i]]->xfxQ(fl,x,Q);
+    res += pdf->xfxQ(index[i],fl,x);
   return res / n;
 }
 
-double StdDeviation::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
   double sum = 0, sq_sum = 0;
 
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q);
+      const double v = pdf->xfxQ(index[i],fl,x);
       sum += v;
       sq_sum += v*v;
     }
@@ -38,102 +38,102 @@ double StdDeviation::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
   return sqrt(sq_sum / (n-1.0) - n/(n-1.0) * sum/n * sum/n);
 }
 
-double Skewness::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
 
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x,Q);
-  double st = est.Evaluate(pdf,fl,index,x,Q);
+  double cv = ecv.Evaluate(pdf,fl,index,x);
+  double st = est.Evaluate(pdf,fl,index,x);
 
   double sum = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q) - cv;
+      const double v = pdf->xfxQ(index[i],fl,x) - cv;
       sum += v*v*v;
     }
 
   return (sum / n) / (st*st*st);
 }
 
-double Kurtosis::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x,Q);
-  double st = est.Evaluate(pdf,fl,index,x,Q);
+  double cv = ecv.Evaluate(pdf,fl,index,x);
+  double st = est.Evaluate(pdf,fl,index,x);
 
   double sum = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q) - cv;
+      const double v = pdf->xfxQ(index[i],fl,x) - cv;
       sum += v*v*v*v;
     }
 
   return (sum / n) / (st*st*st*st);
 }
 
-double moment5th::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x,Q);
-  double st = est.Evaluate(pdf,fl,index,x,Q);
+  double cv = ecv.Evaluate(pdf,fl,index,x);
+  double st = est.Evaluate(pdf,fl,index,x);
 
   double sum = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q) - cv;
+      const double v = pdf->xfxQ(index[i],fl,x) - cv;
       sum += v*v*v*v*v;
     }
 
   return (sum / n) / (st*st*st*st*st);
 }
 
-double moment6th::Evaluate(const vector<LHAPDF::PDF *> &pdf, const int &fl,
-                              const vector<int> &index, const double &x, const double &Q) const
+double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl,
+                              const vector<int> &index, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x,Q);
-  double st = est.Evaluate(pdf,fl,index,x,Q);
+  double cv = ecv.Evaluate(pdf,fl,index,x);
+  double st = est.Evaluate(pdf,fl,index,x);
 
   double sum = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q) - cv;
+      const double v = pdf->xfxQ(index[i],fl,x) - cv;
       sum += v*v*v*v*v*v;
     }
 
   return (sum / n) / (st*st*st*st*st*st);
 }
 
-vector<double> Kolmogorov::Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& fl,
-                        vector<int> const& index,double const& x, double const& Q) const
+vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl,
+                        vector<int> const& index, int const& x) const
 {
   vector<double> res(_regions,0);
 
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x,Q);
-  double st = est.Evaluate(pdf,fl,index,x,Q);
+  double cv = ecv.Evaluate(pdf,fl,index,x);
+  double st = est.Evaluate(pdf,fl,index,x);
 
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
-      const double v = pdf[index[i]]->xfxQ(fl,x,Q);
+      const double v = pdf->xfxQ(index[i],fl,x);
       if (v <= cv -2*st)
         res[0] += 1;
       else if (v <= cv - st)
@@ -155,7 +155,7 @@ vector<double> Kolmogorov::Evaluate(vector<LHAPDF::PDF*> const& pdf, int const& 
   return res;
 }
 
-TMatrixD Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int> &ids, vector<int> const& index, Grid * const &x, double const& Q) const
+TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vector<int> const& index, Grid * const &x) const
 {
   const int n  = index.size();
   const int nx = _size / (int) ids.size();
@@ -179,8 +179,8 @@ TMatrixD Correlation::Evaluate(vector<LHAPDF::PDF*> const& pdf, const vector<int
               double sq_a = 0, sq_b = 0;
               for (int r = 0; r < n; r++)
                 {
-                  const double v1 = pdf[index[r]]->xfxQ(ids[fl1], x->at(xx[ix1]), Q);
-                  const double v2 = pdf[index[r]]->xfxQ(ids[fl2], x->at(xx[ix2]), Q);
+                  const double v1 = pdf->xfxQ(index[r], ids[fl1], xx[ix1]);
+                  const double v2 = pdf->xfxQ(index[r], ids[fl2], xx[ix2]);
                   ab +=  v1*v2;
                   a += v1;
                   b += v2;

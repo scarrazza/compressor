@@ -13,13 +13,14 @@ class EstimatorsS;
 class EstimatorsC;
 class Grid;
 class RandomGenerator;
+class LocalPDF;
 
 class Minimizer
 {
 public:
-  Minimizer(vector<LHAPDF::PDF*> const& pdf, Grid* const& x, double const& Q);
+  Minimizer(LocalPDF* const& pdf, Grid* const& x, int const& nf);
   ~Minimizer();
-  vector<EstimatorsM*> GetMomentEstimators()  const  { return _estM; }
+  vector<EstimatorsM*> GetMomentEstimators()const  { return _estM; }
   vector<EstimatorsS*> GetStatEstimators()  const  { return _estS;   }
   vector<EstimatorsC*> GetCorrEstimators()  const  { return _estC;   }
 
@@ -35,7 +36,6 @@ public:
 
 private:
   int _nf;  
-  double _Q;
   Grid *_x;
   vector<int> _ids;
   vector<int> _index;
@@ -50,7 +50,7 @@ private:
   double*** _iteSval;
   vector<double*> _estCval;  
   double* _iteCval;
-  vector<LHAPDF::PDF*> _pdf;
+  LocalPDF *_pdf;
   int _rep;
   int _nmut;
   int _Nx;

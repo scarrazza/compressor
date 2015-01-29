@@ -97,7 +97,8 @@ am___top_builddir__bin_compressor_OBJECTS =  \
 	__top_builddir__bin_compressor-Grid.$(OBJEXT) \
 	__top_builddir__bin_compressor-main.$(OBJEXT) \
 	__top_builddir__bin_compressor-Minimizer.$(OBJEXT) \
-	__top_builddir__bin_compressor-utils.$(OBJEXT)
+	__top_builddir__bin_compressor-utils.$(OBJEXT) \
+	__top_builddir__bin_compressor-LocalPDF.$(OBJEXT)
 __top_builddir__bin_compressor_OBJECTS =  \
 	$(am___top_builddir__bin_compressor_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -258,7 +259,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-__top_builddir__bin_compressor_SOURCES = Estimators.cc  Grid.cc  main.cc  Makefile.am  Minimizer.cc  utils.cc
+__top_builddir__bin_compressor_SOURCES = Estimators.cc  Grid.cc  main.cc  Makefile.am  Minimizer.cc  utils.cc LocalPDF.cc
 __top_builddir__bin_compressor_CPPFLAGS = -I$(top_srcdir)/inc $(ROOT_CPPFLAGS) $(LHAPDF_CPPFLAGS) $(GSL_CPPFLAGS)
 __top_builddir__bin_compressor_LDADD = $(ROOT_LDFLAGS) $(LHAPDF_LDFLAGS) $(GSL_LDFLAGS)
 all: all-am
@@ -353,6 +354,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-Estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-Grid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-Minimizer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/__top_builddir__bin_compressor-utils.Po@am__quote@
@@ -442,6 +444,20 @@ __top_builddir__bin_compressor-utils.obj: utils.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utils.cc' object='__top_builddir__bin_compressor-utils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(__top_builddir__bin_compressor_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o __top_builddir__bin_compressor-utils.obj `if test -f 'utils.cc'; then $(CYGPATH_W) 'utils.cc'; else $(CYGPATH_W) '$(srcdir)/utils.cc'; fi`
+
+__top_builddir__bin_compressor-LocalPDF.o: LocalPDF.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(__top_builddir__bin_compressor_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT __top_builddir__bin_compressor-LocalPDF.o -MD -MP -MF $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Tpo -c -o __top_builddir__bin_compressor-LocalPDF.o `test -f 'LocalPDF.cc' || echo '$(srcdir)/'`LocalPDF.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Tpo $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='LocalPDF.cc' object='__top_builddir__bin_compressor-LocalPDF.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(__top_builddir__bin_compressor_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o __top_builddir__bin_compressor-LocalPDF.o `test -f 'LocalPDF.cc' || echo '$(srcdir)/'`LocalPDF.cc
+
+__top_builddir__bin_compressor-LocalPDF.obj: LocalPDF.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(__top_builddir__bin_compressor_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT __top_builddir__bin_compressor-LocalPDF.obj -MD -MP -MF $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Tpo -c -o __top_builddir__bin_compressor-LocalPDF.obj `if test -f 'LocalPDF.cc'; then $(CYGPATH_W) 'LocalPDF.cc'; else $(CYGPATH_W) '$(srcdir)/LocalPDF.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Tpo $(DEPDIR)/__top_builddir__bin_compressor-LocalPDF.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='LocalPDF.cc' object='__top_builddir__bin_compressor-LocalPDF.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(__top_builddir__bin_compressor_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o __top_builddir__bin_compressor-LocalPDF.obj `if test -f 'LocalPDF.cc'; then $(CYGPATH_W) 'LocalPDF.cc'; else $(CYGPATH_W) '$(srcdir)/LocalPDF.cc'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

@@ -59,9 +59,14 @@ int main(int argc, char** argv)
   cout << "- Loading grid with LHAPDF6               -" << endl;
   cout << "-------------------------------------------" << endl;
   const LHAPDF::PDFSet set(priorname.c_str());
-  vector<LHAPDF::PDF*> pdf = set.mkPDFs();
- 
-  Minimizer min(pdf,x,Q);
+  vector<LHAPDF::PDF*> lhapdf = set.mkPDFs();
+
+  cout << "\n-------------------------------------------" << endl;
+  cout << "- Preloading grid in memory               -" << endl;
+  cout << "-------------------------------------------" << endl;  
+  int nf = 3;  
+  LocalPDF *pdf = new LocalPDF(lhapdf,nf,x,Q);  
+  Minimizer min(pdf,x,nf);
 
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
   vector<EstimatorsS*> estS = min.GetStatEstimators();
@@ -97,14 +102,14 @@ int main(int argc, char** argv)
 
       index.resize(rep,0);
       // generate random replicas, no duplicates
-      randomize(pdf.size()-1,rg,index);
+      randomize(pdf->size()-1,rg,index);
 
       // computing estimators
       for (size_t es = 0; es < estM.size(); es++)
         {
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
-              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
           erfMs[es][t] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
         }
 
@@ -114,7 +119,7 @@ int main(int argc, char** argv)
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
               {
-                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
                 for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
               }
           erfSs[es][t] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
@@ -123,7 +128,7 @@ int main(int argc, char** argv)
 
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x);
           TMatrixD r = m*invPrior;
 
 	  estCval[0] = 0;
@@ -230,7 +235,7 @@ int main(int argc, char** argv)
         {
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
-              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
           erfMs[es][0] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
         }
 
@@ -240,7 +245,7 @@ int main(int argc, char** argv)
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
               {
-                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,x->at(ix),Q);
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
                 for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
               }
           erfSs[es][0] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
@@ -250,7 +255,7 @@ int main(int argc, char** argv)
       // computing c estimators
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x,Q);
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x);
           TMatrixD r = m*invPrior;
 
           estCval[0] = 0;
@@ -311,9 +316,9 @@ int main(int argc, char** argv)
     }
   delete[] estSval;
   delete x;
-  for (size_t i = 0; i < pdf.size(); i++)
-    if (pdf[i]) delete pdf[i];
-  pdf.clear();
+  for (size_t i = 0; i < lhapdf.size(); i++)
+    if (lhapdf[i]) delete lhapdf[i];
+  lhapdf.clear();
 
   return 0;
 }
@@ -326,5 +331,5 @@ void splash()
     " / /__| (_) | | | | | | |_) | | |  __/\\__ \\__ \\ (_) | |    \n" <<
     " \\____/\\___/|_| |_| |_| .__/|_|  \\___||___/___/\\___/|_|    \n" <<
     "                      |_|                                  \n" << endl;
-  cout << "  __v" << VERSION <<"__ Authors: S. Carrazza, J. I. Latorre\n" << endl;
+  cout << "  __v" << VERSION <<"__ Author: S. Carrazza\n" << endl;
 }
