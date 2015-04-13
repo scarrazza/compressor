@@ -159,10 +159,20 @@ TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vec
 {
   const int n  = index.size();
   const int nx = _size / (int) ids.size();
+  /*
   const int xx[3] = { 
     (int) (1/5.*x->size()), 
     (int) (1/2.*x->size()), 
     (int) (4/5.*x->size())
+  };
+  */
+
+  const int xx[5] = { 
+    (int) (1/5.*x->size()), 
+    (int) (2/5.*x->size()), 
+    (int) (3/5.*x->size()), 
+    (int) (4/5.*x->size()), 
+    (int) (5/5.*x->size())-1, 
   };
 
   TMatrixD m(_size,_size);

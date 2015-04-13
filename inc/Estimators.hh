@@ -107,7 +107,7 @@ public:
 class Correlation: public EstimatorsC
 {
 public:
-  Correlation(int ids): EstimatorsC("Correlation", ids*3) {}
+  Correlation(int ids): EstimatorsC("Correlation", ids*5) {}
   TMatrixD Evaluate(LocalPDF* const& pdf, const vector<int> &ids,
                           vector<int> const& index, Grid* const& x) const;
 };
