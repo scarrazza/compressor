@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   double Q = 1.0;  
   if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
   else { 
-    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [seed=0] [compress=true]\n" << endl; 
+    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [seed=0] [compress=1]\n" << endl; 
     exit(-1);
   }
   if (argc >= 4) { Q = atof(argv[3]); }
