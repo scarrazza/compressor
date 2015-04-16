@@ -1,0 +1,149 @@
+#!/usr/bin/python
+import os
+import sys
+import shutil
+import lhapdf
+from subprocess import *
+
+if len(sys.argv) < 3:
+    print "\nusage: ./compressor_buildgrid [prior set name] [compressed rep] \n"
+    exit()
+
+dirb  = sys.argv[1]
+rep   =  int(sys.argv[2])
+
+pdfdir = Popen(["lhapdf-config", "--datadir"], stdout=PIPE).communicate()[0]
+pdfdir = pdfdir.replace('\n','')
+
+f = open(dirb + '/replica_compression_' + str(rep) + '.dat','rb')
+
+out = dirb + "_compressed_" + str(rep)
+
+print "output:", out
+print "replicas:", rep
+
+try:
+    os.mkdir(out)
+except:
+    pass
+
+cindex = []
+index = 1
+for i in f.readlines():
+    cindex.append(int(i))
+
+    id = int(i)
+    if id < 10:
+        a = "000" + str(id)
+    elif id < 100:
+        a = "00" + str(id)
+    elif id < 1000:
+        a = "0" + str(id)
+    else:
+        a = str(id)
+
+    if index < 10:
+        b = "000" + str(index)
+    elif index < 100:
+        b = "00" + str(index)
+    elif index < 1000:
+        b = "0" + str(index)
+    else:
+        b = str(index)
+
+    print "copy ", a, "\t->\t", b
+    src = pdfdir + "/" + dirb + "/" + dirb + "_" + a + ".dat"
+    dest= out + "/" + out + "_" + b + ".dat"
+    shutil.copy(src,dest)
+    index+=1
+
+f.close()
+
+src = pdfdir + "/" + dirb + "/" + dirb + ".info"
+dest= out + "/" + out + ".info"
+f = open(src,'rb')
+o = open(dest,'wb')
+
+for i in f.readlines():
+    if "NumMembers:" in i:
+        o.write("NumMembers: " + str(rep+1) + "\n")
+    else:
+        o.write(i)
+
+o.close()
+f.close()
+
+pdf = lhapdf.mkPDFs(dirb)
+
+w = open(pdfdir + "/" + dirb + "/" + dirb + "_0000.dat",'rb')
+xpdf = []
+xgrid = []
+qgrid = []
+fgrid = []
+textxs = []
+textqs = []
+textfs = []
+for j in range(0,2): w.readline()
+s = 0
+while True:
+    w.readline()
+
+    textxs.append(w.readline())
+    xs = [float(el) for el in textxs[s].split()]
+
+    textqs.append(w.readline())
+    qs = [float(el) for el in textqs[s].split()]
+
+    textfs.append(w.readline())
+    fs = [int(el) for el in textfs[s].split()]
+
+    if len(xs) == 0: break
+
+    xgrid.append(xs)
+    qgrid.append(qs)
+    fgrid.append(fs)
+
+    nx = len(xgrid[s])
+    nq = len(qgrid[s])
+    print "Subgrid", s, len(xgrid[s]), len(qgrid[s]), len(fgrid[s])
+    for ix in range(0,nx):
+        for iq in range(0,nq):
+            w.readline().split()
+    s+=1
+w.close()
+
+# reading xpdf
+for irep in range(len(cindex)):
+    print "- Reading replica", irep+1, cindex[irep]
+    xpdf.append([])
+    for ss in range(s):
+        xpdf[irep].append([])
+        for ix in range(len(xgrid[ss])):
+            xpdf[irep][ss].append([])
+            for iq in range(len(qgrid[ss])):
+                xpdf[irep][ss][ix].append([])
+                for ifl in range(len(fgrid[ss])):
+                    xpdf[irep][ss][ix][iq].append(pdf[cindex[irep]].xfxQ(fgrid[ss][ifl], xgrid[ss][ix], qgrid[ss][iq]))
+
+
+print "computing replica 0"
+w = open(out + "/" + out + "_0000.dat",'wb')
+w.write("PdfType: central\n")
+w.write("Format: lhagrid1\n---\n")
+
+for ss in range(s):
+    w.write(textxs[ss])
+    w.write(textqs[ss])
+    w.write(textfs[ss])
+    for ix in range(len(xgrid[ss])):
+        for iq in range(len(qgrid[ss])):
+            w.write(" ")
+            for ifl in range(len(fgrid[ss])):
+                sum = 0
+                for irep in range(len(cindex)):
+                    sum += xpdf[irep][ss][ix][iq][ifl]
+                sum /= rep
+                print >> w, "%14.7E" % sum,
+            w.write("\n")
+    w.write("---\n")
+w.close()
