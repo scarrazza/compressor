@@ -64,5 +64,3 @@ $ root -l compressor_validate.C
 ## Contact Information
 
 Maintainer: Stefano Carrazza (stefano.carrazza@mi.infn.it)
-
-Homepage:
