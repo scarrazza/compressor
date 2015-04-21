@@ -19,7 +19,7 @@ $ cd compressor
 $ ./configure --prefix=/path/to/install/location
 $ make && make install
 ```
-This operation will copy the bin/compression binary to /usr/local/bin.
+This operation will copy the bin/compressor binary to /usr/local/bin.
 
 ## Usage
 ### Running the code
