@@ -59,7 +59,7 @@ Finally, in order to generate the ERF plots place the */bin/compressor_validate.
 ```Shell
 $ root -l compressor_validate.C
 ```
-# Auxiliary tools
+## Auxiliary tools
 
 We provide tools for the computation of correlations in the *tools/* folder and script for the construction of CMC-PDFs in *cmctools/* folder.
 
