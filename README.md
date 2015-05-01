@@ -2,6 +2,8 @@
 
 A compression tool for Monte Carlo PDF sets.
 
+If you use this code in a scientific publication, please cite http://arxiv.org/abs/1504.06469
+
 ## Download
 
 Download the latest [release](https://github.com/scarrazza/compressor/releases) or clone the master development repository by running the following command:
