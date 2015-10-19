@@ -12,8 +12,8 @@
 #include "TDecompLU.h"
 using namespace std;
 
-double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
+                              vector<double> const& w, const int &x) const
 {
   double res = 0;
   const int n = index.size();
@@ -22,8 +22,8 @@ double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl,
   return res / n;
 }
 
-double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
+                              vector<double> const& w, const int &x) const
 {
   double sum = 0, sq_sum = 0;
 
@@ -38,15 +38,15 @@ double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl,
   return sqrt(sq_sum / (n-1.0) - n/(n-1.0) * sum/n * sum/n);
 }
 
-double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
+                          vector<double> const& w, const int &x) const
 {
 
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x);
-  double st = est.Evaluate(pdf,fl,index,x);
+  double cv = ecv.Evaluate(pdf,fl,index,w,x);
+  double st = est.Evaluate(pdf,fl,index,w,x);
 
   double sum = 0;
   const int n = index.size();
@@ -59,14 +59,14 @@ double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl,
   return (sum / n) / (st*st*st);
 }
 
-double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int> &index,
+                          vector<double> const& w, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x);
-  double st = est.Evaluate(pdf,fl,index,x);
+  double cv = ecv.Evaluate(pdf,fl,index,w,x);
+  double st = est.Evaluate(pdf,fl,index,w,x);
 
   double sum = 0;
   const int n = index.size();
@@ -79,14 +79,14 @@ double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl,
   return (sum / n) / (st*st*st*st);
 }
 
-double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
+                           vector<double> const& w, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x);
-  double st = est.Evaluate(pdf,fl,index,x);
+  double cv = ecv.Evaluate(pdf,fl,index,w,x);
+  double st = est.Evaluate(pdf,fl,index,w,x);
 
   double sum = 0;
   const int n = index.size();
@@ -99,14 +99,14 @@ double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl,
   return (sum / n) / (st*st*st*st*st);
 }
 
-double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl,
-                              const vector<int> &index, const int &x) const
+double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int> &index,
+                           vector<double> const& w, const int &x) const
 {
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x);
-  double st = est.Evaluate(pdf,fl,index,x);
+  double cv = ecv.Evaluate(pdf,fl,index,w,x);
+  double st = est.Evaluate(pdf,fl,index,w,x);
 
   double sum = 0;
   const int n = index.size();
@@ -119,16 +119,16 @@ double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl,
   return (sum / n) / (st*st*st*st*st*st);
 }
 
-vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl,
-                        vector<int> const& index, int const& x) const
+vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl, vector<int> const& index,
+                                    vector<double> const& w, int const& x) const
 {
   vector<double> res(_regions,0);
 
   CentralValue ecv;
   StdDeviation est;
 
-  double cv = ecv.Evaluate(pdf,fl,index,x);
-  double st = est.Evaluate(pdf,fl,index,x);
+  double cv = ecv.Evaluate(pdf,fl,index,w,x);
+  double st = est.Evaluate(pdf,fl,index,w,x);
 
   const int n = index.size();
   for (int i = 0; i < n; i++)
@@ -155,7 +155,8 @@ vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl,
   return res;
 }
 
-TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vector<int> const& index, Grid * const &x) const
+TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vector<int> const& index,
+                               vector<double> const& w, Grid * const &x) const
 {
   const int n  = index.size();
   const int nx = _size / (int) ids.size();

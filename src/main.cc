@@ -21,18 +21,19 @@ void splash();
 int main(int argc, char** argv)
 {
   int    rep;
-  bool   compress = true;
+  bool   nocompress = false;
   unsigned long int seed = 0;
   string priorname;
   double Q = 1.0;  
-  if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
+  if (argc > 3) { rep = atoi(argv[1]); priorname.assign(argv[2]); Q = atof(argv[3]); }
   else { 
-    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [seed=0] [compress=1]\n" << endl; 
+    cout << "\n usage: ./compressor [rep] [pdf-name] [Q] [seed] [no-grid]" << endl;
+    cout << "   optional: [seed]      seed value" << endl;
+    cout << "             [no-grid]   1 do not export grid\n" << endl;
     exit(-1);
   }
-  if (argc >= 4) { Q = atof(argv[3]); }
   if (argc >= 5) { seed = atoi(argv[4]); }
-  if (argc >= 6) { compress = atoi(argv[5]); }
+  if (argc >= 6) { nocompress = atoi(argv[5]); }
 
   splash();
   
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
   const int trials = 1000;
   cout << "\n* Random trials: " << trials << endl;
   vector<int> index;
+  vector<double> w;
   double*   estCval = new double[estC[0]->getSize()];
   double**  estMval = new double*[min.GetIDS().size()];
   double*** estSval = new double**[min.GetIDS().size()];
@@ -101,6 +103,7 @@ int main(int argc, char** argv)
       cout.flush();
 
       index.resize(rep,0);
+      w.resize(rep,1);
       // generate random replicas, no duplicates
       randomize(pdf->size()-1,rg,index);
 
@@ -109,7 +112,7 @@ int main(int argc, char** argv)
         {
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
-              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,w,ix);
           erfMs[es][t] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
         }
 
@@ -119,7 +122,7 @@ int main(int argc, char** argv)
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
               {
-                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,w,ix);
                 for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
               }
           erfSs[es][t] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
@@ -128,7 +131,7 @@ int main(int argc, char** argv)
 
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x);
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,w,x);
           TMatrixD r = m*invPrior;
 
 	  estCval[0] = 0;
@@ -200,7 +203,7 @@ int main(int argc, char** argv)
   f << endl;
   f.close();
 
-  if (compress)
+  if (!nocompress)
     {
       cout << "\n- Error Function Normalizations" << endl;
       cout << "-   CV : " << N[0] << endl;
@@ -225,6 +228,7 @@ int main(int argc, char** argv)
       cout << endl;
 
       index = min.getIndex();
+      w = min.getW();
 
       for (size_t es = 0; es < estM.size(); es++) erfMs[es][0] = 0.0;
       for (size_t es = 0; es < estS.size(); es++) erfSs[es][0] = 0.0;
@@ -235,7 +239,7 @@ int main(int argc, char** argv)
         {
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
-              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
+              estMval[fl][ix] = estM[es]->Evaluate(pdf,min.GetIDS()[fl],index,w,ix);
           erfMs[es][0] += ERF(min.GetIDS().size(), x->size(), estMval, min.GetPriorMomentEstValues()[es]);
         }
 
@@ -245,7 +249,7 @@ int main(int argc, char** argv)
           for (size_t fl = 0; fl < min.GetIDS().size(); fl++)
             for (int ix = 0; ix < x->size(); ix++)
               {
-                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,ix);
+                vector<double> res = estS[es]->Evaluate(pdf,min.GetIDS()[fl],index,w,ix);
                 for (int l = 0; l < estS[es]->getRegions(); l++) estSval[fl][ix][l] = res[l];
               }
           erfSs[es][0] += ERFS(min.GetIDS().size(),x->size(),estS[es]->getRegions(),
@@ -255,7 +259,7 @@ int main(int argc, char** argv)
       // computing c estimators
       for (size_t es = 0; es < estC.size(); es++)
         {
-          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,x);
+          TMatrixD m = estC[es]->Evaluate(pdf,min.GetIDS(),index,w,x);
           TMatrixD r = m*invPrior;
 
           estCval[0] = 0;

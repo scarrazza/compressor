@@ -32,6 +32,7 @@ public:
   double iterate();
   void setupminimizer(int rep, vector<double> N, RandomGenerator *rg);
   vector<int> getIndex() const { return _index; }
+  vector<double> getW() const { return _w; }
 
 
 private:
@@ -56,4 +57,5 @@ private:
   int _Nx;
   vector< vector<int> > _mut;
   RandomGenerator *_rg;
+  vector<double> _w;
 };

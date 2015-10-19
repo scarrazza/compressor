@@ -24,10 +24,10 @@ Minimizer::Minimizer(LocalPDF* const& pdf,
   _estM.push_back(new Kurtosis());
   //_estM.push_back(new moment5th());
   //_estM.push_back(new moment6th());
-
   _estS.push_back(new Kolmogorov());
+  _estC.push_back(new Correlation(2*_nf+1));  
 
-  _estC.push_back(new Correlation(2*_nf+1));
+  _w.resize(_pdf->size(),1.0);
 
   // extracting active flavors
   _ids.resize(2*_nf+1);
@@ -50,7 +50,7 @@ Minimizer::Minimizer(LocalPDF* const& pdf,
   for (size_t fl = 0; fl < _ids.size(); fl++)
     for (int ix = 0; ix < _x->size(); ix++)
       for (size_t es = 0; es < _estM.size(); es++)
-        _estMval[es][fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_index,ix);
+        _estMval[es][fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_index,_w,ix);
 
   // computing statistical tests
   for (size_t es = 0; es < _estS.size(); es++)
@@ -69,7 +69,7 @@ Minimizer::Minimizer(LocalPDF* const& pdf,
     for (int ix = 0; ix < _x->size(); ix++)
       for (size_t es = 0; es < _estS.size(); es++)
         {
-          vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_index,ix);
+          vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_index,_w,ix);
           for (int l = 0; l < _estS[es]->getRegions(); l++) _estSval[es][fl][ix][l] = res[l];
         }  
 
@@ -77,7 +77,7 @@ Minimizer::Minimizer(LocalPDF* const& pdf,
   for (size_t i = 0; i < _estC.size(); i++)
     {
       _estCval.push_back(new double[_estC[i]->getSize()]);
-      TMatrixD m = _estC[i]->Evaluate(_pdf,_ids,_index,_x);
+      TMatrixD m = _estC[i]->Evaluate(_pdf,_ids,_index,_w,_x);
       _invmatrix.ResizeTo(m); _invmatrix = m; _invmatrix.Invert();
 
       TMatrixD r = m*_invmatrix;
@@ -139,6 +139,7 @@ Minimizer::~Minimizer()
   _index.clear();
   _ids.clear();
   _mut.clear();
+  _w.clear();
 
 }
 
@@ -150,6 +151,7 @@ void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
   _nmut = 5;
   _mut.resize(_nmut); for (int i = 0; i < _nmut; i++) _mut[i].resize(_rep,0);
   _rg = rg;
+  _w.resize(rep, 1.0);
 }
 
 double Minimizer::iterate()
@@ -161,7 +163,7 @@ double Minimizer::iterate()
     {
       for (size_t fl = 0; fl <_ids.size(); fl++)
         for (int ix = 0; ix < _x->size(); ix++)
-          _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_index,ix);
+          _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_index,_w,ix);
       berf += ERF(_ids.size(), _x->size(), _iteMval, _estMval[es]) / _N[es];
     }
 
@@ -170,14 +172,14 @@ double Minimizer::iterate()
       for (size_t fl = 0; fl <_ids.size(); fl++)
         for (int ix = 0; ix < _x->size(); ix++)
           {
-            vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_index,ix);
+            vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_index,_w,ix);
             for (int l = 0; l < _estS[es]->getRegions(); l++) _iteSval[fl][ix][l] = res[l];
           }
       berf += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
     }
   for (size_t es = 0; es < _estC.size(); es++)
     {
-      TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_x);
+      TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_index,_w,_x);
       TMatrixD r = m*_invmatrix;
 
       _iteCval[0] = 0;
@@ -218,7 +220,7 @@ double Minimizer::iterate()
         {
           for (size_t fl = 0; fl <_ids.size(); fl++)
             for (int ix = 0; ix < _x->size(); ix++)
-              _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_mut[i],ix);
+              _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_mut[i],_w,ix);
           erf[i] += ERF(_ids.size(), _x->size(), _iteMval, _estMval[es]) / _N[es];
         }
 
@@ -227,7 +229,7 @@ double Minimizer::iterate()
           for (size_t fl = 0; fl <_ids.size(); fl++)
             for (int ix = 0; ix < _x->size(); ix++)
               {
-                vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_mut[i],ix);
+                vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_mut[i],_w,ix);
                 for (int l = 0; l < _estS[es]->getRegions(); l++) _iteSval[fl][ix][l] = res[l];
               }
           erf[i] += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
@@ -235,7 +237,7 @@ double Minimizer::iterate()
 
       for (size_t es = 0; es < _estC.size(); es++)
         {
-          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_x);
+          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_w,_x);
           TMatrixD r = m*_invmatrix;
 
 	  _iteCval[0] = 0;
