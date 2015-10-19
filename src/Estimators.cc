@@ -15,27 +15,31 @@ using namespace std;
 double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
                               vector<double> const& w, const int &x) const
 {
-  double res = 0;
+  double res = 0, wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
-    res += pdf->xfxQ(index[i],fl,x);
-  return res / n;
+    {
+      res += w[i]*pdf->xfxQ(index[i],fl,x);
+      wtot+= w[i];
+    }
+  return res / wtot;
 }
 
 double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
                               vector<double> const& w, const int &x) const
 {
-  double sum = 0, sq_sum = 0;
+  double sum = 0, sq_sum = 0, wtot = 0;
 
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x);
-      sum += v;
-      sq_sum += v*v;
+      sum += w[i]*v;
+      sq_sum += w[i]*v*v;
+      wtot += w[i];
     }
 
-  return sqrt(sq_sum / (n-1.0) - n/(n-1.0) * sum/n * sum/n);
+  return sqrt(sq_sum / (wtot-1.0) - wtot/(wtot-1.0) * sum/wtot * sum/wtot);
 }
 
 double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
@@ -48,15 +52,16 @@ double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int>
   double cv = ecv.Evaluate(pdf,fl,index,w,x);
   double st = est.Evaluate(pdf,fl,index,w,x);
 
-  double sum = 0;
+  double sum = 0, wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x) - cv;
-      sum += v*v*v;
+      sum += w[i]*v*v*v;
+      wtot += w[i];
     }
 
-  return (sum / n) / (st*st*st);
+  return (sum / wtot) / (st*st*st);
 }
 
 double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int> &index,
@@ -68,12 +73,12 @@ double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int>
   double cv = ecv.Evaluate(pdf,fl,index,w,x);
   double st = est.Evaluate(pdf,fl,index,w,x);
 
-  double sum = 0;
+  double sum = 0, wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x) - cv;
-      sum += v*v*v*v;
+      sum += w[i]*v*v*v*v;
     }
 
   return (sum / n) / (st*st*st*st);
@@ -88,15 +93,16 @@ double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int
   double cv = ecv.Evaluate(pdf,fl,index,w,x);
   double st = est.Evaluate(pdf,fl,index,w,x);
 
-  double sum = 0;
+  double sum = 0, wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x) - cv;
-      sum += v*v*v*v*v;
+      sum += w[i]*v*v*v*v*v;
+      wtot+= w[i];
     }
 
-  return (sum / n) / (st*st*st*st*st);
+  return (sum / wtot) / (st*st*st*st*st);
 }
 
 double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int> &index,
@@ -108,15 +114,15 @@ double moment6th::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int
   double cv = ecv.Evaluate(pdf,fl,index,w,x);
   double st = est.Evaluate(pdf,fl,index,w,x);
 
-  double sum = 0;
+  double sum = 0, wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x) - cv;
-      sum += v*v*v*v*v*v;
+      sum += w[i]*v*v*v*v*v*v;
     }
 
-  return (sum / n) / (st*st*st*st*st*st);
+  return (sum / wtot) / (st*st*st*st*st*st);
 }
 
 vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl, vector<int> const& index,
@@ -130,27 +136,29 @@ vector<double> Kolmogorov::Evaluate(LocalPDF* const& pdf, int const& fl, vector<
   double cv = ecv.Evaluate(pdf,fl,index,w,x);
   double st = est.Evaluate(pdf,fl,index,w,x);
 
+  double wtot = 0;
   const int n = index.size();
   for (int i = 0; i < n; i++)
     {
       const double v = pdf->xfxQ(index[i],fl,x);
       if (v <= cv -2*st)
-        res[0] += 1;
+        res[0] += w[i];
       else if (v <= cv - st)
-        res[1] += 1;
+        res[1] += w[i];
       else if (v <= cv)
-        res[2] += 1;
+        res[2] += w[i];
       else if (v <= cv + st)
-        res[3] += 1;
+        res[3] += w[i];
       else if (v <= cv + 2*st)
-        res[4] += 1;
+        res[4] += w[i];
       else if (v > cv + 2*st)
-        res[5] += 1;
+        res[5] += w[i];
       else
         cout << "ERROR" << endl;
+      wtot += w[i];
     }
 
-  for (int l = 0; l < _regions; l++) res[l] /= (double) n;
+  for (int l = 0; l < _regions; l++) res[l] /= wtot;
 
   return res;
 }
@@ -186,26 +194,27 @@ TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vec
           for (int ix2 = 0; ix2 < nx; ix2++)
             {
               const int j = nx*fl2+ix2;
-              double ab = 0, a = 0, b = 0;
+              double ab = 0, a = 0, b = 0, wtot = 0;
               double sq_a = 0, sq_b = 0;
               for (int r = 0; r < n; r++)
                 {
                   const double v1 = pdf->xfxQ(index[r], ids[fl1], xx[ix1]);
                   const double v2 = pdf->xfxQ(index[r], ids[fl2], xx[ix2]);
-                  ab +=  v1*v2;
-                  a += v1;
-                  b += v2;
-                  sq_a += v1*v1;
-                  sq_b += v2*v2;
+                  ab +=  w[r]*v1*v2;
+                  a += w[r]*v1;
+                  b += w[r]*v2;
+                  sq_a += w[r]*v1*v1;
+                  sq_b += w[r]*v2*v2;
+                  wtot += w[r];
                 }
-              ab /= n;
-              a  /= n;
-              b  /= n;
+              ab /= wtot;
+              a  /= wtot;
+              b  /= wtot;
 
-              double sig1 = sqrt(sq_a/(n-1.0) - n/(n-1.0)*a*a);
-              double sig2 = sqrt(sq_b/(n-1.0) - n/(n-1.0)*b*b);
+              double sig1 = sqrt(sq_a/(wtot-1.0) - wtot/(wtot-1.0)*a*a);
+              double sig2 = sqrt(sq_b/(wtot-1.0) - wtot/(wtot-1.0)*b*b);
 
-              m(i,j) = n/(n-1.0)*(ab - a*b)/(sig1*sig2);
+              m(i,j) = wtot/(wtot-1.0)*(ab - a*b)/(sig1*sig2);
             }
       }
 
