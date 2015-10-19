@@ -58,4 +58,5 @@ private:
   vector< vector<int> > _mut;
   RandomGenerator *_rg;
   vector<double> _w;
+  vector< vector<double> > _mutw;
 };

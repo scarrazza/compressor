@@ -148,7 +148,7 @@ int main(int argc, char** argv)
   double cv = 0, md = 0, up50 = 0, dn50 = 0;
   double up68 = 0, dn68 = 0, up90 = 0, dn90 = 0;
   cout.precision(4);
-  fstream f;
+  fstream f, f2;
   f.precision(4);
   f << scientific;
 
@@ -296,11 +296,18 @@ int main(int argc, char** argv)
       f << endl;
       f.close();
 
-      stringstream file2("");
+      stringstream file2(""), file3("");
       file2 << priorname.c_str() << "/replica_compression_" << rep << ".dat";
+      file3 << priorname.c_str() << "/replica_weights_" << rep << ".dat";
       f.open(file2.str().c_str(), ios::out);
-      for (int i = 0; i < rep; i++) f << index[i] << endl;
+      f2.open(file3.str().c_str(), ios::out);
+      for (int i = 0; i < rep; i++)
+        {
+          f << index[i] << endl;
+          f2 << w[i] << endl;
+        }
       f.close();
+      f2.close();
 
       cout << "\n- In order to create the compressed grid in the LHAPDF6 format" << endl;
       cout << "  Please run now: ./compressor_buildgrid " << rep << " " << priorname << endl;

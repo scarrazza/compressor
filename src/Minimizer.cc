@@ -151,7 +151,8 @@ void Minimizer::setupminimizer(int rep, vector<double> N, RandomGenerator *rg)
   _nmut = 5;
   _mut.resize(_nmut); for (int i = 0; i < _nmut; i++) _mut[i].resize(_rep,0);
   _rg = rg;
-  _w.resize(rep, 1.0);
+  _w.resize(_rep, 1.0);
+  _mutw.resize(_nmut); for (int i = 0; i < _nmut; i++) _mutw[i].resize(_rep,1);
 }
 
 double Minimizer::iterate()
@@ -192,7 +193,10 @@ double Minimizer::iterate()
   // set mut
   for (int i = 0; i < _nmut; i++)
     for (int j = 0; j < _rep; j++)
+      {
         _mut[i][j] = _index[j];
+        _mutw[i][j] = _w[j];
+      }
 
   // GA mutation
   for (int i = 0; i < _nmut; i++)
@@ -209,6 +213,16 @@ double Minimizer::iterate()
           const int pos = _rg->GetRandomUniform(_pdf->size()-1)+1;
           _mut[i][_rg->GetRandomUniform(_rep)] = pos;
         }
+
+      // GA for weights -- keep 1 for first mutant
+      double wtot = 0;
+      for (int t = 0; t < _w.size(); t++)
+        {
+          _mutw[i][t] = -log(_rg->GetRandomUniform(0,1));
+          wtot += _mutw[i][t];
+        }
+      for (int t = 0; t < _w.size(); t++)
+        _mutw[i][t] /= wtot/_rep;
     }
 
   // Compute ERF
@@ -220,7 +234,7 @@ double Minimizer::iterate()
         {
           for (size_t fl = 0; fl <_ids.size(); fl++)
             for (int ix = 0; ix < _x->size(); ix++)
-              _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_mut[i],_w,ix);
+              _iteMval[fl][ix] = _estM[es]->Evaluate(_pdf,_ids[fl],_mut[i],_mutw[i],ix);
           erf[i] += ERF(_ids.size(), _x->size(), _iteMval, _estMval[es]) / _N[es];
         }
 
@@ -229,7 +243,7 @@ double Minimizer::iterate()
           for (size_t fl = 0; fl <_ids.size(); fl++)
             for (int ix = 0; ix < _x->size(); ix++)
               {
-                vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_mut[i],_w,ix);
+                vector<double> res = _estS[es]->Evaluate(_pdf,_ids[fl],_mut[i],_mutw[i],ix);
                 for (int l = 0; l < _estS[es]->getRegions(); l++) _iteSval[fl][ix][l] = res[l];
               }
           erf[i] += ERFS(_ids.size(), _x->size(), _estS[es]->getRegions(), _iteSval, _estSval[es]) / _N[es+Msize];
@@ -237,7 +251,7 @@ double Minimizer::iterate()
 
       for (size_t es = 0; es < _estC.size(); es++)
         {
-          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_w,_x);
+          TMatrixD m = _estC[es]->Evaluate(_pdf,_ids,_mut[i],_mutw[i],_x);
           TMatrixD r = m*_invmatrix;
 
 	  _iteCval[0] = 0;
@@ -259,7 +273,7 @@ double Minimizer::iterate()
       }
 
   if (bestchi2 < berf)
-    for (int i = 0; i < (int) _rep; i++) _index[i] = _mut[id][i];
+    for (int i = 0; i < (int) _rep; i++) { _index[i] = _mut[id][i]; _w[i] = _mutw[id][i]; }
   else bestchi2 = berf;
 
   delete[] erf;
