@@ -225,7 +225,14 @@ int main(int argc, char** argv)
           cout << "* Iteration " << i+1 << "/" << Nite << "\t ERF = " << e << "\r";
           cout.flush();
         }
-      cout << endl;
+      cout << endl;      
+      for (int i = 0; i < Nite; i++)
+        {
+          e = min.iterate_w();
+          cout << "* Iteration W " << i+1 << "/" << Nite << "\t ERF = " << e << "\r";
+          cout.flush();
+        }
+      cout << endl;      
 
       index = min.getIndex();
       w = min.getW();

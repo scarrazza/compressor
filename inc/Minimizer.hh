@@ -30,6 +30,7 @@ public:
   TMatrixD          GetPriorInvMatrix()       const { return _invmatrix; }
   vector<int> GetIDS() const { return _ids; }
   double iterate();
+  double iterate_w();
   void setupminimizer(int rep, vector<double> N, RandomGenerator *rg);
   vector<int> getIndex() const { return _index; }
   vector<double> getW() const { return _w; }
