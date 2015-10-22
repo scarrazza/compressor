@@ -217,22 +217,16 @@ int main(int argc, char** argv)
       min.setupminimizer(rep,N,rg);
 
       cout << "\n- Compressing:" << endl;
-      const int Nite = 15000;
+      const int Nite = 2*15000;
       double e;
       for (int i = 0; i < Nite; i++)
         {
-          e = min.iterate();
+          //e = min.iterate();
+          e = min.iterate_w();
           cout << "* Iteration " << i+1 << "/" << Nite << "\t ERF = " << e << "\r";
           cout.flush();
         }
-      cout << endl;      
-      for (int i = 0; i < Nite; i++)
-        {
-          e = min.iterate_w();
-          cout << "* Iteration W " << i+1 << "/" << Nite << "\t ERF = " << e << "\r";
-          cout.flush();
-        }
-      cout << endl;      
+      cout << endl;
 
       index = min.getIndex();
       w = min.getW();
