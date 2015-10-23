@@ -28,7 +28,7 @@ double CentralValue::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<
 double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
                               vector<double> const& w, const int &x) const
 {
-  double sum = 0, sq_sum = 0, wtot = 0;
+  double sum = 0, sq_sum = 0, wtot = 0, w2tot = 0;
 
   const int n = index.size();
   for (int i = 0; i < n; i++)
@@ -37,9 +37,10 @@ double StdDeviation::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<
       sum += w[i]*v;
       sq_sum += w[i]*v*v;
       wtot += w[i];
+      w2tot += w[i]*w[i];
     }
 
-  return sqrt(sq_sum / (wtot-1.0) - wtot/(wtot-1.0) * sum/wtot * sum/wtot);
+  return sqrt( (sq_sum * wtot - sum * sum) / (wtot*wtot - w2tot) );
 }
 
 double Skewness::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
@@ -79,9 +80,10 @@ double Kurtosis::Evaluate(LocalPDF* const &pdf, const int &fl, const vector<int>
     {
       const double v = pdf->xfxQ(index[i],fl,x) - cv;
       sum += w[i]*v*v*v*v;
+      wtot += w[i];
     }
 
-  return (sum / n) / (st*st*st*st);
+  return (sum / wtot) / (st*st*st*st);
 }
 
 double moment5th::Evaluate(LocalPDF* const& pdf, const int &fl, const vector<int> &index,
@@ -194,7 +196,7 @@ TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vec
           for (int ix2 = 0; ix2 < nx; ix2++)
             {
               const int j = nx*fl2+ix2;
-              double ab = 0, a = 0, b = 0, wtot = 0;
+              double ab = 0, a = 0, b = 0, wtot = 0, w2tot = 0;
               double sq_a = 0, sq_b = 0;
               for (int r = 0; r < n; r++)
                 {
@@ -206,15 +208,13 @@ TMatrixD Correlation::Evaluate(LocalPDF* const& pdf, const vector<int> &ids, vec
                   sq_a += w[r]*v1*v1;
                   sq_b += w[r]*v2*v2;
                   wtot += w[r];
+		  w2tot += w[r]*w[r];
                 }
-              ab /= wtot;
-              a  /= wtot;
-              b  /= wtot;
+	    
+              double sig1 = sqrt( (sq_a * wtot - a * a) / ( wtot*wtot - w2tot) );
+              double sig2 = sqrt( (sq_b * wtot - b * b) / ( wtot*wtot - w2tot) );
 
-              double sig1 = sqrt(sq_a/(wtot-1.0) - wtot/(wtot-1.0)*a*a);
-              double sig2 = sqrt(sq_b/(wtot-1.0) - wtot/(wtot-1.0)*b*b);
-
-              m(i,j) = wtot/(wtot-1.0)*(ab - a*b)/(sig1*sig2);
+              m(i,j) = wtot*wtot/(wtot*wtot-w2tot)*(ab/wtot - a/wtot*b/wtot)/(sig1*sig2);
             }
       }
 
