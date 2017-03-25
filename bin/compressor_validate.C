@@ -1,6 +1,6 @@
 const int N = 6;
 
-void compressor_validate()
+void compressor_validate(string folder = "./")
 {  
   TMultiGraph** mg = new TMultiGraph*[N];
   for (int i = 0; i < N; i++) mg[i] = new TMultiGraph();
@@ -15,7 +15,8 @@ void compressor_validate()
   double mt1, mt2, mt3, mt4, mt5, mt6, mt7;
 
   fstream f,g;
-  f.open("erf_random.dat", ios::in);
+  string file = folder + "erf_random.dat";
+  f.open(file.c_str(), ios::in);
 
   TGraphErrors **gcv = new TGraphErrors*[N];
   TGraphErrors **gmd = new TGraphErrors*[N];
@@ -76,7 +77,8 @@ void compressor_validate()
   
   f.close();
 
-  g.open("erf_compression.dat", ios::in); 
+  file = folder + "erf_compression.dat";
+  g.open(file.c_str(), ios::in); 
   
   TGraphErrors **gccv = new TGraphErrors*[N];
   for (int i = 0; i < N; i++) 

@@ -20,22 +20,23 @@ void splash();
 
 int main(int argc, char** argv)
 {
-  int    rep;
+  int    rep, nf = 3;
   bool   compress = true;
   unsigned long int seed = 0;
   string priorname;
-  double Q = 1.0;  
+  double Q = 1.0;
   if (argc > 2) { rep = atoi(argv[1]); priorname.assign(argv[2]); }
-  else { 
-    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [seed=0] [compress=1]\n" << endl; 
+  else {
+    cout << "\n usage: ./compressor [REP] [PDF prior name] [energy Q=1] [nf=3] [seed=0] [compress=1]\n" << endl;
     exit(-1);
   }
   if (argc >= 4) { Q = atof(argv[3]); }
-  if (argc >= 5) { seed = atoi(argv[4]); }
-  if (argc >= 6) { compress = atoi(argv[5]); }
+  if (argc >= 5) { nf = atoi(argv[4]); }
+  if (argc >= 6) { seed = atoi(argv[5]); }
+  if (argc >= 7) { compress = atoi(argv[6]); }
 
   splash();
-  
+
   cout << "-------------------------------------------" << endl;
   cout << "- Setup summary                           -" << endl;
   cout << "-------------------------------------------" << endl;
@@ -43,7 +44,7 @@ int main(int argc, char** argv)
   cout << "- Desired compression: " << rep << endl;
   cout << "- Input energy Qin   : " << Q << " GeV" << endl;
   cout << "- Creating out.folder: " << priorname.c_str() << "/" << endl;
-  mkdir(priorname.c_str(),0777);  
+  mkdir(priorname.c_str(),0777);
 
   // allocate common rg for random testing before fit
   cout << "- Seed               : " << seed << endl;
@@ -63,9 +64,8 @@ int main(int argc, char** argv)
 
   cout << "\n-------------------------------------------" << endl;
   cout << "- Preloading grid in memory               -" << endl;
-  cout << "-------------------------------------------" << endl;  
-  int nf = 3;  
-  LocalPDF *pdf = new LocalPDF(lhapdf,nf,x,Q);  
+  cout << "-------------------------------------------" << endl;
+  LocalPDF *pdf = new LocalPDF(lhapdf,nf,x,Q);
   Minimizer min(pdf,x,nf);
 
   vector<EstimatorsM*> estM = min.GetMomentEstimators();
